@@ -16,8 +16,8 @@ using namespace std;
 
 vector<Point2f> pos1(25), pos2(25);
 
-Mat img1 = imread("IMG_1.jpg");
-Mat img2 = imread("IMG_2.jpg");
+Mat img1 = imread("IMG_L.JPG");
+Mat img2 = imread("IMG_C.JPG");
 static int i = 0, j = 0;
 
 // mouse callback function
@@ -60,6 +60,7 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
 }
 
 
+//template <typename T1, typename T2>
 int main(int argc, char** argv)
 {
     // Read image from file 
@@ -73,8 +74,8 @@ int main(int argc, char** argv)
     //}
 
     // Create a window
-    namedWindow("image1", 1);
-    namedWindow("image2", 1);
+    namedWindow("image1", WINDOW_NORMAL);
+    namedWindow("image2", WINDOW_NORMAL);
 
     // set the callback function for any mouse event
     setMouseCallback("image1", callback1_Func, NULL);
@@ -105,10 +106,73 @@ int main(int argc, char** argv)
     cy = (double) ns[5];
     Point2d pp(cx, cy);
 
-    Mat E, mask;
-    E = findEssentialMat(pos1, pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
+    FileNode d = fs["distortion_coefficients"];
+    FileNode ds = d["data"];
 
-    cout << "\nitNr "<< E << endl;
+    // distortion coefficient vector
+    //vector<double> dc(10);
+    Mat dc = Mat::eye(5, 1, CV_64F);
+    int k = 0;
+
+    for(int p=0;p<5;p++)
+        for(int q=0;q<1;q++)
+        {
+            dc.at<double>(p, q) = (double) ds[k];
+            k++;
+        }
+
+
+    Mat E, mask, lr, dt, cam_mat = Mat::eye(3, 3, CV_64F);
+
+    // camera matrix
+    k = 0;
+    for(int p=0;p<3;p++)
+    {
+        for(int q=0;q<3;q++)
+        {
+            cam_mat.at<double>(p, q) = (double) ns[k];
+            k++;
+        }
+    }
+    E = findEssentialMat(pos1, pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
+    //E = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
+
+    dt = getOptimalNewCameraMatrix(cam_mat, dc, img1.size(), 1.0, img1.size());
+    
+   // vector<Vec4i> epilines1, epilines2;
+    
+    //computeCorrespondEpilines(pos1, 1, E, epilines1);
+    //computeCorrespondEpilines(pos2, 2, E, epilines2);
+    //lr = E*lr;
+
+    //for(int m=0;m<E.cols;m++) 
+    //{ 
+    //    for(int n=0;n<E.rows;n++) 
+    //    { 
+    //        lr[m][n] = E[m][n]*pos1[n]; 
+    //    } 
+    //}
+
+
+    //RNG rng(0);
+    //Scalar color(rng(256),rng(256),rng(256));
+
+    //CV_Assert(pos1.size() == pos2.size() &&
+    //        pos2.size() == epilines1.size() &&
+    //        epilines1.size() == epilines2.size());
+
+    //line(img2,
+    //Point(0,-epilines1[i][2]/epilines1[i][1]),
+    //Point(img1.cols,-(epilines1[i][2]+epilines1[i][0]*img1.cols)/epilines1[i][1]),
+    //    color);
+
+    Mat undist_img1 = img1.clone();
+    undistort(img1, undist_img1, dt, dc);
+    namedWindow("image3", WINDOW_NORMAL);
+    imshow("image3", undist_img1);
+    //imshow("image2", img2);
+    waitKey(0);
+    cout << "\nitNr "<< dt << endl;
 
     return 0;
     
