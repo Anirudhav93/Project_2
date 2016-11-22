@@ -35,8 +35,10 @@ void callback1_Func(int event, int x, int y, int flags, void* userdate)
         //pos1.y[i] = y;
         pos1.push_back(Point(x, y));
         i++;
-        rectangle(img1, Point(x-5, y-5), Point(x+5, y+5), Scalar(0,255,0), -1);
+        namedWindow("image1", WINDOW_NORMAL);
+        rectangle(img1, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
         imshow("image1", img1);
+        waitKey(0);
     }
 }
 
@@ -54,8 +56,10 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
         //pos2.y[j] = y;
         pos2.push_back(Point(x, y));
         j++;
-        rectangle(img2, Point(x-5, y-5), Point(x+5, y+5), Scalar(0,255,0), -1);
+        rectangle(img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
+        namedWindow("image2",WINDOW_NORMAL);
         imshow("image2", img2);
+        waitKey(0);
     }
 }
 
@@ -77,13 +81,17 @@ int main(int argc, char** argv)
     namedWindow("image1", WINDOW_NORMAL);
     namedWindow("image2", WINDOW_NORMAL);
 
+    imshow("image1", img1);
+    imshow("image2", img2);
+
+
     // set the callback function for any mouse event
     setMouseCallback("image1", callback1_Func, NULL);
     setMouseCallback("image2", callback2_Func, NULL);
 
     // show the image
-    imshow("image1", img1);
-    imshow("image2", img2);
+    //imshow("image1", img1);
+    //imshow("image2", img2);
     
     // Wait until user press some key
     waitKey(0);
