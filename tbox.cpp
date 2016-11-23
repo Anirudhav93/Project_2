@@ -2,11 +2,11 @@
 #include "opencv2/core/core.hpp" 
 #include "opencv2/imgproc/imgproc.hpp" 
 #include "opencv2/calib3d/calib3d.hpp"
- 
+//#include <stdio.h> 
 #include <string.h>
 #include <iostream>
-
-
+//#include <tuple>
+#include<list>
 using namespace cv;
 using namespace std;
 
@@ -14,17 +14,40 @@ using namespace std;
 //Pos pos1;
 //Pos pos2;
 
-vector<Point2f> pos1(25), pos2(25);
-
-Mat img1 = imread("IMG_L.JPG");
-Mat img2 = imread("IMG_C.JPG");
-static int i = 0, j = 0;
-
-// mouse callback function
-void callback1_Func(int event, int x, int y, int flags, void* userdate)
+class Project
 {
+
+vector<Point2f> pos1,pos2;
+
+public:
+list<IplImage *>image_list; 
+    
+Project()
+{
+   //pos1(25), pos2(25);
+}
+
+public: list<IplImage *> init()
+{
+    list<IplImage *>image_list;
+    IplImage *Img1, *Img2;
+    Mat img1 = imread("IMG_L.JPG");
+    Mat img2 = imread("IMG_C.JPG");
+    cvCopy(img1, &Img1);
+    cvCopy(img2, &Img2);
+    image_list.push_back(Img1);
+    image_list.push_back(Img2);
+    return image_list;
+}
+//int i = 0, j = 0;
+// mouse callback function
+public: void callback1_Func(int event, int x, int y, int flags, void* userdate)
+{
+    list<IplImage *>ilist;
+    ilist = this->init();
     if (event == EVENT_LBUTTONDOWN )
     {
+        static int i=0;
         if (i >= 20) 
         {
             cout << "Too many points clicked." <<endl;
@@ -36,16 +59,16 @@ void callback1_Func(int event, int x, int y, int flags, void* userdate)
         pos1.push_back(Point(x, y));
         i++;
         namedWindow("image1", WINDOW_NORMAL);
-        rectangle(img1, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
-        imshow("image1", img1);
+        rectangle(ilist[0], Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
+        imshow("image1", ilist[0]);
         waitKey(0);
     }
 }
 
-void callback2_Func(int event, int x, int y, int flags, void* userdate)
+public: void callback2_Func(int event, int x, int y, int flags, void* userdate)
 {
     if (event == EVENT_LBUTTONDOWN )
-    {
+    {   static int j=0;
         if (j >= 20) 
         {
             cout << "Too many points clicked." <<endl;
@@ -58,12 +81,12 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
         j++;
         rectangle(img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
         namedWindow("image2",WINDOW_NORMAL);
-        imshow("image2", img2);
+        imshow("image2", image_list[1]);
         waitKey(0);
     }
 }
 
-
+}p;
 //template <typename T1, typename T2>
 int main(int argc, char** argv)
 {
@@ -81,13 +104,16 @@ int main(int argc, char** argv)
     namedWindow("image1", WINDOW_NORMAL);
     namedWindow("image2", WINDOW_NORMAL);
 
-    imshow("image1", img1);
-    imshow("image2", img2);
+    list<IplImage *> ilist;
+    ilist = p.init();
+    
+    imshow("image1", ilist[0]);
+    imshow("image2", ilist[1]);
 
 
     // set the callback function for any mouse event
-    setMouseCallback("image1", callback1_Func, NULL);
-    setMouseCallback("image2", callback2_Func, NULL);
+    setMouseCallback("image1", p.callback1_Func, NULL);
+    setMouseCallback("image2", p.callback2_Func, NULL);
 
     // show the image
     //imshow("image1", img1);
@@ -98,7 +124,7 @@ int main(int argc, char** argv)
     //waitKey(0);
 
 
-    string filename = "camera.yml";
+    string filename = "camera.xml";
     FileStorage fs(filename, FileStorage::READ);
 
     double fx, fy, cx, cy;
