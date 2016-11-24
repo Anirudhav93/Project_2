@@ -2,57 +2,120 @@
 #include "opencv2/core/core.hpp" 
 #include "opencv2/imgproc/imgproc.hpp" 
 #include "opencv2/calib3d/calib3d.hpp"
-//#include <stdio.h> 
 #include <string.h>
 #include <iostream>
-//#include <tuple>
-#include<list>
 using namespace cv;
 using namespace std;
 
-//struct Pos { int x[25], y[25];};
-//Pos pos1;
-//Pos pos2;
 
-class Project
+void callback1_Func(int event, int x, int y, int flags, void* userdate);
+void callback2_Func(int event, int x, int y, int flags, void* userdate);
+
+class Part_3
 {
 
-//vector<Point2f> pos1,pos2;
+    public:
+    // members
+    vector<Point2f> pos1,pos2;
+    Mat img1, img2, undist_img1, undist_img2;
+    double fx, fy, cx, cy;
+    Mat dc, E, F, mask;
 
-public:
-//list<IplImage *>image_list; 
-vector<Point2f> pos1,pos2;
+    // constructor
+    Part_3()
+    {
+        dc = Mat::eye(5, 1, CV_64F);
+    }
 
-Mat img1, img2;
-    
-//Project()
-//{
-   //pos1(25), pos2(25);
-//}
+    // member functions
+    void init_image(string a, string b)
+    {
+        img1 = imread(a);
+        img2 = imread(b);
+    }
 
-public: //list<IplImage *> init()
-//void init()
-Project()
-{
-    //list<IplImage *>image_list;
-    //IplImage *Img1, *Img2;
-    img1 = imread("IMG_L.JPG");
-    img2 = imread("IMG_C.JPG");
-    //cvCopy(img1, &Img1);
-    //cvCopy(img2, &Img2);
-    //image_list.push_back(Img1);
-    //image_list.push_back(Img2);
-    //return image_list;
-}
+    void display_image(Mat i1, Mat i2)
+    {
+        namedWindow("image1", WINDOW_NORMAL);
+        namedWindow("image2", WINDOW_NORMAL);
+
+        imshow("image1", i1);
+        imshow("image2", i2);
+
+        // set the callback function for any mouse event
+        setMouseCallback("image1", callback1_Func, NULL);
+        setMouseCallback("image2", callback2_Func, NULL);
+
+        // Wait until user press some key
+         waitKey(0);
+    }
+
+    void undistort_image()
+    {
+        string filename = "camera.yml";
+        FileStorage fs(filename, FileStorage::READ);
+
+        // double fx, fy, cx, cy;
+        FileNode n = fs["camera_matrix"];
+        FileNode ns = n["data"];
+        fx = (double) ns[0];
+        fy = (double) ns[4];
+        cx = (double) ns[2];
+        cy = (double) ns[5];
+
+        FileNode d = fs["distortion_coefficients"];
+        FileNode ds = d["data"];
+
+        // distortion coefficient vector
+        int k = 0;
+
+        for(int r=0;r<5;r++)
+            for(int q=0;q<1;q++)
+            {
+                dc.at<double>(r, q) = (double) ds[k];
+                k++;
+            }
+
+
+        Mat lr, dt1, dt2, cam_mat = Mat::eye(3, 3, CV_64F);
+
+        // camera matrix
+        k = 0;
+        for(int r=0;r<3;r++)
+        {
+            for(int q=0;q<3;q++)
+            {
+                cam_mat.at<double>(r, q) = (double) ns[k];
+                k++;
+            }
+        }
+
+        dt1 = getOptimalNewCameraMatrix(cam_mat, dc, img1.size(), 1.0, img1.size());
+        dt2 = getOptimalNewCameraMatrix(cam_mat, dc, img2.size(), 1.0, img2.size());
+
+        undist_img1 = img1.clone();
+        undist_img2 = img2.clone();
+        
+        undistort(img1, undist_img1, dt1, dc);
+        undistort(img2, undist_img2, dt2, dc);
+
+        display_image(undist_img1, undist_img2);
+    }
+
+    void epipolar_image()
+    {
+        Point2d pp(cx, cy);
+        E = findEssentialMat(pos1, pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
+        F = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
+        cout << "E "<< E <<endl;
+        cout << "F "<< F <<endl;
+    }
+
 }p;
-//int i = 0, j = 0;
+
 // mouse callback function
-
-
 void callback1_Func(int event, int x, int y, int flags, void* userdate)
 {
-    //list<IplImage *>ilist;
-    //ilist = this->init();
     if (event == EVENT_LBUTTONDOWN )
     {
         static int i=0;
@@ -62,13 +125,11 @@ void callback1_Func(int event, int x, int y, int flags, void* userdate)
             return;
         }
         cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
-        //pos1.x[i] = x;
-        //pos1.y[i] = y;
         p.pos1.push_back(Point(x, y));
         i++;
         namedWindow("image1", WINDOW_NORMAL);
-        rectangle(p.img1, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
-        imshow("image1", p.img1);
+        rectangle(p.undist_img1, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
+        imshow("image1", p.undist_img1);
         waitKey(0);
     }
 }
@@ -83,165 +144,51 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
             return;
         }
         cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
-        //pos2.x[j] = x;
-        //pos2.y[j] = y;
         p.pos2.push_back(Point(x, y));
         j++;
-        rectangle(p.img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
+        rectangle(p.undist_img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
         namedWindow("image2",WINDOW_NORMAL);
-        imshow("image2", p.img2);
+        imshow("image2", p.undist_img2);
         waitKey(0);
     }
 }
 
-void part_3()
-{
-    namedWindow("image1", WINDOW_NORMAL);
-    namedWindow("image2", WINDOW_NORMAL);
-
-    //list<IplImage *> ilist;
-    //ilist = p.init();
-
-    //p.init();
-    imshow("image1", p.img1);
-    imshow("image2", p.img2);
-
-
-    // set the callback function for any mouse event
-    setMouseCallback("image1", callback1_Func, NULL);
-    setMouseCallback("image2", callback2_Func, NULL);
-
-    // show the image
-    //imshow("image1", img1);
-    //imshow("image2", img2);
-    
-    // Wait until user press some key
-    waitKey(0);
-}
 
 //template <typename T1, typename T2>
 int main(int argc, char** argv)
 {
-    // Read image from file 
-    //Mat img = imread("IMG_1.jpg");
-         
-    // if fail to read the image
-    //if ( img.empty() ) 
-    //{ 
-    //    cout << "Error loading the image" << endl;
-    //    return -1; 
-    //}
+    string a, b;
+    a = "IMG_L.JPG";
+    b = "IMG_C.JPG";
+    p.init_image(a, b);
+    p.undistort_image();
+    p.epipolar_image();
     
-    part_3();
-    //// Create a window
-    //namedWindow("image1", WINDOW_NORMAL);
-    //namedWindow("image2", WINDOW_NORMAL);
-
-    ////list<IplImage *> ilist;
-    ////ilist = p.init();
-
-    ////p.init();
-    //imshow("image1", p.img1);
-    //imshow("image2", p.img2);
-
-
-
-    //// set the callback function for any mouse event
-    //setMouseCallback("image1", callback1_Func, NULL);
-    //setMouseCallback("image2", callback2_Func, NULL);
-
-    //// show the image
-    ////imshow("image1", img1);
-    ////imshow("image2", img2);
+    //// vector<Vec4i> epilines1, epilines2;
     //
-    //// Wait until user press some key
-    //waitKey(0);
-    //waitKey(0);
+    ////computeCorrespondEpilines(pos1, 1, E, epilines1);
+    ////computeCorrespondEpilines(pos2, 2, E, epilines2);
+    ////lr = E*lr;
 
+    ////for(int m=0;m<E.cols;m++) 
+    ////{ 
+    ////    for(int n=0;n<E.rows;n++) 
+    ////    { 
+    ////        lr[m][n] = E[m][n]*pos1[n]; 
+    ////    } 
+    ////}
 
-    string filename = "camera.xml";
-    FileStorage fs(filename, FileStorage::READ);
+    ////RNG rng(0);
+    ////Scalar color(rng(256),rng(256),rng(256));
 
-    double fx, fy, cx, cy;
-    //vector<Point2f> points1, points2;
-    //fs["avg_reprojection_error"] >> itNr;
-    //itNr = (double) fs["camera_matrix"];
-    FileNode n = fs["camera_matrix"];
-    FileNode ns = n["data"];
-    //itNr = itNr["data"];
-    fx = (double) ns[0];
-    fy = (double) ns[4];
-    cx = (double) ns[2];
-    cy = (double) ns[5];
-    Point2d pp(cx, cy);
+    ////CV_Assert(pos1.size() == pos2.size() &&
+    ////        pos2.size() == epilines1.size() &&
+    ////        epilines1.size() == epilines2.size());
 
-    FileNode d = fs["distortion_coefficients"];
-    FileNode ds = d["data"];
-
-    // distortion coefficient vector
-    //vector<double> dc(10);
-    Mat dc = Mat::eye(5, 1, CV_64F);
-    int k = 0;
-
-    for(int r=0;r<5;r++)
-        for(int q=0;q<1;q++)
-        {
-            dc.at<double>(r, q) = (double) ds[k];
-            k++;
-        }
-
-
-    Mat E, mask, lr, dt, cam_mat = Mat::eye(3, 3, CV_64F);
-
-    // camera matrix
-    k = 0;
-    for(int r=0;r<3;r++)
-    {
-        for(int q=0;q<3;q++)
-        {
-            cam_mat.at<double>(r, q) = (double) ns[k];
-            k++;
-        }
-    }
-    E = findEssentialMat(p.pos1, p.pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
-    //E = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
-
-    dt = getOptimalNewCameraMatrix(cam_mat, dc, p.img1.size(), 1.0, p.img1.size());
-    
-   // vector<Vec4i> epilines1, epilines2;
-    
-    //computeCorrespondEpilines(pos1, 1, E, epilines1);
-    //computeCorrespondEpilines(pos2, 2, E, epilines2);
-    //lr = E*lr;
-
-    //for(int m=0;m<E.cols;m++) 
-    //{ 
-    //    for(int n=0;n<E.rows;n++) 
-    //    { 
-    //        lr[m][n] = E[m][n]*pos1[n]; 
-    //    } 
-    //}
-
-
-    //RNG rng(0);
-    //Scalar color(rng(256),rng(256),rng(256));
-
-    //CV_Assert(pos1.size() == pos2.size() &&
-    //        pos2.size() == epilines1.size() &&
-    //        epilines1.size() == epilines2.size());
-
-    //line(img2,
-    //Point(0,-epilines1[i][2]/epilines1[i][1]),
-    //Point(img1.cols,-(epilines1[i][2]+epilines1[i][0]*img1.cols)/epilines1[i][1]),
-    //    color);
-
-    Mat undist_img1 = p.img1.clone();
-    undistort(p.img1, undist_img1, dt, dc);
-    namedWindow("image3", WINDOW_NORMAL);
-    imshow("image3", undist_img1);
-    //imshow("image2", img2);
-    waitKey(0);
-    cout << "\nitNr "<< dt << endl;
+    ////line(img2,
+    ////Point(0,-epilines1[i][2]/epilines1[i][1]),
+    ////Point(img1.cols,-(epilines1[i][2]+epilines1[i][0]*img1.cols)/epilines1[i][1]),
+    ////    color);
 
     return 0;
     
