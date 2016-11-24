@@ -16,7 +16,7 @@ class Part_3
 
     public:
     // members
-    vector<Point2f> pos1,pos2;
+    vector<Point> pos1,pos2;
     Mat img1, img2, undist_img1, undist_img2;
     double fx, fy, cx, cy;
     Mat dc, E, F, mask;
@@ -55,7 +55,6 @@ class Part_3
         string filename = "camera.yml";
         FileStorage fs(filename, FileStorage::READ);
 
-        // double fx, fy, cx, cy;
         FileNode n = fs["camera_matrix"];
         FileNode ns = n["data"];
         fx = (double) ns[0];
@@ -154,7 +153,6 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
 }
 
 
-//template <typename T1, typename T2>
 int main(int argc, char** argv)
 {
     string a, b;
@@ -164,32 +162,5 @@ int main(int argc, char** argv)
     p.undistort_image();
     p.epipolar_image();
     
-    //// vector<Vec4i> epilines1, epilines2;
-    //
-    ////computeCorrespondEpilines(pos1, 1, E, epilines1);
-    ////computeCorrespondEpilines(pos2, 2, E, epilines2);
-    ////lr = E*lr;
-
-    ////for(int m=0;m<E.cols;m++) 
-    ////{ 
-    ////    for(int n=0;n<E.rows;n++) 
-    ////    { 
-    ////        lr[m][n] = E[m][n]*pos1[n]; 
-    ////    } 
-    ////}
-
-    ////RNG rng(0);
-    ////Scalar color(rng(256),rng(256),rng(256));
-
-    ////CV_Assert(pos1.size() == pos2.size() &&
-    ////        pos2.size() == epilines1.size() &&
-    ////        epilines1.size() == epilines2.size());
-
-    ////line(img2,
-    ////Point(0,-epilines1[i][2]/epilines1[i][1]),
-    ////Point(img1.cols,-(epilines1[i][2]+epilines1[i][0]*img1.cols)/epilines1[i][1]),
-    ////    color);
-
-    return 0;
-    
+    return 0;    
 }
