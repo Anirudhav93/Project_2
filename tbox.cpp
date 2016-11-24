@@ -2,11 +2,11 @@
 #include "opencv2/core/core.hpp" 
 #include "opencv2/imgproc/imgproc.hpp" 
 #include "opencv2/calib3d/calib3d.hpp"
- 
+//#include <stdio.h> 
 #include <string.h>
 #include <iostream>
-
-
+//#include <tuple>
+#include<list>
 using namespace cv;
 using namespace std;
 
@@ -14,17 +14,48 @@ using namespace std;
 //Pos pos1;
 //Pos pos2;
 
-vector<Point2f> pos1(25), pos2(25);
+class Project
+{
 
-Mat img1 = imread("IMG_L.JPG");
-Mat img2 = imread("IMG_C.JPG");
-static int i = 0, j = 0;
+//vector<Point2f> pos1,pos2;
 
+public:
+//list<IplImage *>image_list; 
+vector<Point2f> pos1,pos2;
+
+Mat img1, img2;
+    
+//Project()
+//{
+   //pos1(25), pos2(25);
+//}
+
+public: //list<IplImage *> init()
+//void init()
+Project()
+{
+    //list<IplImage *>image_list;
+    //IplImage *Img1, *Img2;
+    img1 = imread("IMG_L.JPG");
+    img2 = imread("IMG_C.JPG");
+    //cvCopy(img1, &Img1);
+    //cvCopy(img2, &Img2);
+    //image_list.push_back(Img1);
+    //image_list.push_back(Img2);
+    //return image_list;
+}
+}p;
+//int i = 0, j = 0;
 // mouse callback function
+
+
 void callback1_Func(int event, int x, int y, int flags, void* userdate)
 {
+    //list<IplImage *>ilist;
+    //ilist = this->init();
     if (event == EVENT_LBUTTONDOWN )
     {
+        static int i=0;
         if (i >= 20) 
         {
             cout << "Too many points clicked." <<endl;
@@ -33,11 +64,11 @@ void callback1_Func(int event, int x, int y, int flags, void* userdate)
         cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
         //pos1.x[i] = x;
         //pos1.y[i] = y;
-        pos1.push_back(Point(x, y));
+        p.pos1.push_back(Point(x, y));
         i++;
         namedWindow("image1", WINDOW_NORMAL);
-        rectangle(img1, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
-        imshow("image1", img1);
+        rectangle(p.img1, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
+        imshow("image1", p.img1);
         waitKey(0);
     }
 }
@@ -45,7 +76,7 @@ void callback1_Func(int event, int x, int y, int flags, void* userdate)
 void callback2_Func(int event, int x, int y, int flags, void* userdate)
 {
     if (event == EVENT_LBUTTONDOWN )
-    {
+    {   static int j=0;
         if (j >= 20) 
         {
             cout << "Too many points clicked." <<endl;
@@ -54,15 +85,39 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
         cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
         //pos2.x[j] = x;
         //pos2.y[j] = y;
-        pos2.push_back(Point(x, y));
+        p.pos2.push_back(Point(x, y));
         j++;
-        rectangle(img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
+        rectangle(p.img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
         namedWindow("image2",WINDOW_NORMAL);
-        imshow("image2", img2);
+        imshow("image2", p.img2);
         waitKey(0);
     }
 }
 
+void part_3()
+{
+    namedWindow("image1", WINDOW_NORMAL);
+    namedWindow("image2", WINDOW_NORMAL);
+
+    //list<IplImage *> ilist;
+    //ilist = p.init();
+
+    //p.init();
+    imshow("image1", p.img1);
+    imshow("image2", p.img2);
+
+
+    // set the callback function for any mouse event
+    setMouseCallback("image1", callback1_Func, NULL);
+    setMouseCallback("image2", callback2_Func, NULL);
+
+    // show the image
+    //imshow("image1", img1);
+    //imshow("image2", img2);
+    
+    // Wait until user press some key
+    waitKey(0);
+}
 
 //template <typename T1, typename T2>
 int main(int argc, char** argv)
@@ -76,29 +131,35 @@ int main(int argc, char** argv)
     //    cout << "Error loading the image" << endl;
     //    return -1; 
     //}
-
-    // Create a window
-    namedWindow("image1", WINDOW_NORMAL);
-    namedWindow("image2", WINDOW_NORMAL);
-
-    imshow("image1", img1);
-    imshow("image2", img2);
-
-
-    // set the callback function for any mouse event
-    setMouseCallback("image1", callback1_Func, NULL);
-    setMouseCallback("image2", callback2_Func, NULL);
-
-    // show the image
-    //imshow("image1", img1);
-    //imshow("image2", img2);
     
-    // Wait until user press some key
-    waitKey(0);
+    part_3();
+    //// Create a window
+    //namedWindow("image1", WINDOW_NORMAL);
+    //namedWindow("image2", WINDOW_NORMAL);
+
+    ////list<IplImage *> ilist;
+    ////ilist = p.init();
+
+    ////p.init();
+    //imshow("image1", p.img1);
+    //imshow("image2", p.img2);
+
+
+
+    //// set the callback function for any mouse event
+    //setMouseCallback("image1", callback1_Func, NULL);
+    //setMouseCallback("image2", callback2_Func, NULL);
+
+    //// show the image
+    ////imshow("image1", img1);
+    ////imshow("image2", img2);
+    //
+    //// Wait until user press some key
+    //waitKey(0);
     //waitKey(0);
 
 
-    string filename = "camera.yml";
+    string filename = "camera.xml";
     FileStorage fs(filename, FileStorage::READ);
 
     double fx, fy, cx, cy;
@@ -122,10 +183,10 @@ int main(int argc, char** argv)
     Mat dc = Mat::eye(5, 1, CV_64F);
     int k = 0;
 
-    for(int p=0;p<5;p++)
+    for(int r=0;r<5;r++)
         for(int q=0;q<1;q++)
         {
-            dc.at<double>(p, q) = (double) ds[k];
+            dc.at<double>(r, q) = (double) ds[k];
             k++;
         }
 
@@ -134,18 +195,18 @@ int main(int argc, char** argv)
 
     // camera matrix
     k = 0;
-    for(int p=0;p<3;p++)
+    for(int r=0;r<3;r++)
     {
         for(int q=0;q<3;q++)
         {
-            cam_mat.at<double>(p, q) = (double) ns[k];
+            cam_mat.at<double>(r, q) = (double) ns[k];
             k++;
         }
     }
-    E = findEssentialMat(pos1, pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
+    E = findEssentialMat(p.pos1, p.pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
     //E = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
 
-    dt = getOptimalNewCameraMatrix(cam_mat, dc, img1.size(), 1.0, img1.size());
+    dt = getOptimalNewCameraMatrix(cam_mat, dc, p.img1.size(), 1.0, p.img1.size());
     
    // vector<Vec4i> epilines1, epilines2;
     
@@ -174,8 +235,8 @@ int main(int argc, char** argv)
     //Point(img1.cols,-(epilines1[i][2]+epilines1[i][0]*img1.cols)/epilines1[i][1]),
     //    color);
 
-    Mat undist_img1 = img1.clone();
-    undistort(img1, undist_img1, dt, dc);
+    Mat undist_img1 = p.img1.clone();
+    undistort(p.img1, undist_img1, dt, dc);
     namedWindow("image3", WINDOW_NORMAL);
     imshow("image3", undist_img1);
     //imshow("image2", img2);
