@@ -21,12 +21,13 @@ class Part_3
 
     Mat img1, img2, undist_img1, undist_img2;
     double fx, fy, cx, cy;
-    Mat dc, E, F, mask;
+    Mat dc, cam_mat, E, F, mask;
 
     // constructor
     Part_3()
     {
         dc = Mat::eye(5, 1, CV_64F);
+        cam_mat = Mat::eye(3, 3, CV_64F);
     }
 
     // member functions
@@ -78,7 +79,7 @@ class Part_3
             }
 
 
-        Mat lr, dt1, dt2, cam_mat = Mat::eye(3, 3, CV_64F);
+        Mat lr, dt1, dt2;
 
         // camera matrix
         k = 0;
@@ -110,7 +111,7 @@ class Part_3
         F = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
         cout << "E "<< E <<endl;
         cout << "F "<< F <<endl;
-        cout << "Mask "<< (int) mask.at<char>(0,1) <<endl;
+        //cout << "Mask "<< (int) mask.at<char>(0,1) <<endl;
 
         Mat epilines1, epilines2;
         for(int r=0;r< 8;r++)
@@ -123,9 +124,9 @@ class Part_3
                 n_pos2.push_back(Point(pos2[r].x, pos2[r].y));
             }
         }
-        computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
-        computeCorrespondEpilines(n_pos2, 2, F, epilines2);
-        cout << epilines1 <<endl;
+        computeCorrespondEpilines(n_pos1, 1, E, epilines1); //Index starts with 1
+        computeCorrespondEpilines(n_pos2, 2, E, epilines2);
+        //cout << epilines1 <<endl;
         cout << n_pos1.size() << endl;
         
        // Mat h = findHomography(pos1, pos2);
