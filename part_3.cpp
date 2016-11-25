@@ -42,8 +42,8 @@ class Part_3
         namedWindow("image1", WINDOW_NORMAL);
         namedWindow("image2", WINDOW_NORMAL);
 
-        imshow("image1", i1);
-        imshow("image2", i2);
+        imshow("image1", img1);
+        imshow("image2", img2);
 
         // set the callback function for any mouse event
         setMouseCallback("image1", callback1_Func, NULL);
@@ -144,6 +144,42 @@ class Part_3
         imshow("image2", undist_img2);
         waitKey(0);
     }
+
+//Members for part_4
+//Mat U, V_t, Sig, U_t, V;
+//Mat R1, R2;
+//Mat W = (Mat_<double>(3,3)<< 0, -1, 0, 1, 0, 0, 0, 0, 1);
+//vector<Point3f>point_in_world;
+//vector<Point3f>point_in_other_cam;
+//float Error;
+//void compute_pairs()
+//{
+//    transpose(V_t, V);
+//    SVD::compute(E, Sig, U, V_t);
+//    if(determinant(U)==-1 &&determinant(V) ==-1)
+//    {
+//        cout<<"incorrect essential matrix"<<endl;
+//        return;
+//    }
+//
+//    else if(determinant(U)==-1 ||determinant(V)==-1)
+//    {
+//        cout<<"inverted essential";
+//        E = -E;
+//    }
+//    
+//    else
+//    {
+//        cout<<"Correct essential";
+//    }
+//
+//    SVD::compute(E, Sig, U, V_t);
+//    transpose(U,U_t);
+//    //R1= U*
+//}
+
+
+
 
 }p;
 
