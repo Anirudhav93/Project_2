@@ -17,6 +17,8 @@ class Part_3
     public:
     // members
     vector<Point2f> pos1,pos2;
+    vector<Point2f> n_pos1,n_pos2;
+
     Mat img1, img2, undist_img1, undist_img2;
     double fx, fy, cx, cy;
     Mat dc, E, F, mask;
@@ -108,15 +110,29 @@ class Part_3
         F = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
         cout << "E "<< E <<endl;
         cout << "F "<< F <<endl;
+        cout << "Mask "<< (int) mask.at<char>(0,1) <<endl;
 
         Mat epilines1, epilines2;
-        computeCorrespondEpilines(pos1, 1, F, epilines1); //Index starts with 1
-        computeCorrespondEpilines(pos2, 2, F, epilines2);
-        //cout << epilines1.at<float>(1,2)/epilines1.at<float>(1,1) <<endl;
-       
+        for(int r=0;r< 8;r++)
+        {
+            //cout << "Mask num "<< mask.at<int>(r,0) << endl;
+            if((int) mask.at<char>(r,0) == 1)
+            {
+                //cout << "Point "<< pos1[r].x <<endl;
+                n_pos1.push_back(Point(pos1[r].x, pos1[r].y));
+                n_pos2.push_back(Point(pos2[r].x, pos2[r].y));
+            }
+        }
+        computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
+        computeCorrespondEpilines(n_pos2, 2, F, epilines2);
+        cout << epilines1 <<endl;
+        cout << n_pos1.size() << endl;
+        
+       // Mat h = findHomography(pos1, pos2);
+        //warpPerspective(undist_img1, undist_img2, h, undist_img1.size());
         namedWindow("image1", WINDOW_NORMAL);
         namedWindow("image2", WINDOW_NORMAL);
-        for(int r=0; r<pos1.size(); r++)
+        for(int r=0; r<n_pos1.size(); r++)
         {
             line(undist_img2, Point(0,-epilines1.at<float>(r,2)/epilines1.at<float>(r,1)), Point(undist_img2.cols,-(epilines1.at<float>(r,2)+epilines1.at<float>(r,0)*undist_img2.cols)/epilines1.at<float>(r,1)),Scalar(0,255,0), 5, CV_AA);
             line(undist_img1, Point(0,-epilines2.at<float>(r,2)/epilines2.at<float>(r,1)), Point(undist_img1.cols,-(epilines2.at<float>(r,2)+epilines2.at<float>(r,0)*undist_img1.cols)/epilines2.at<float>(r,1)),Scalar(0,255,0), 5, CV_AA);
