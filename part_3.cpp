@@ -2,6 +2,8 @@
 #include "opencv2/core/core.hpp" 
 #include "opencv2/imgproc/imgproc.hpp" 
 #include "opencv2/calib3d/calib3d.hpp"
+//#include "opencv2/features2d/features2d.hpp"
+//#include "~/OpenCV/opencv-2.4.13/modules/nonfree/include/opencv2/nonfree/features2d.hpp"
 #include <string.h>
 #include <iostream>
 using namespace cv;
@@ -52,6 +54,15 @@ class Part_3
         // Wait until user press some key
          waitKey(0);
     }
+
+    //Mat kp1, kp2;
+    //void detect_key_points(Mat i1, Mat i2)
+    //{
+    //    SiftFeatureDetector Detector;
+    //    //SIFT Detector;
+    //    Detector.detect(i1, kp1);
+    //    Detector.detect(i2, kp2);
+    //}
 
     void undistort_image()
     {
@@ -107,29 +118,84 @@ class Part_3
     void epipolar_image()
     {
         Point2d pp(cx, cy);
-        E = findEssentialMat(pos1, pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
-        F = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
-        cout << "E "<< E <<endl;
-        cout << "F "<< F <<endl;
+        //E = findEssentialMat(pos1, pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
+        //F = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
+        //cout << "E "<< E <<endl;
+        //cout << "F "<< F <<endl;
         //cout << "Mask "<< (int) mask.at<char>(0,1) <<endl;
+        
+        //Mat H = findHomography(pos1, pos2, RANSAC, 5.0, mask);
+        //cout << "H "<< H << endl;
+        Mat me1, st1, me2, st2;
+        //convertPointsToHomogeneous(pos1, pos1);
+        //convertPointsToHomogeneous(pos2, pos2);
+        meanStdDev(pos1, me1, st1);
+        meanStdDev(pos2, me2, st2);
+
+        //cout << "Mask "<< mask << endl;
+        cout << "mean " << me1.at<double>(0,0) << endl;
+        //cout << "std " << st << endl;
+
+        for(int r = 0; r < pos1.size(); r++)
+        {
+            n_pos1.push_back(Point(abs(pos1[r].x - me1.at<double>(0,0))/fx, abs(pos1[r].y - me1.at<double>(0,1))/fy));
+            n_pos2.push_back(Point(abs(pos2[r].x - me2.at<double>(0,0))/fx, abs(pos2[r].y - me2.at<double>(0,1))/fy));
+
+            //n_pos1[r].y = pos1[r].y - me.at<double>(0,1);
+        }
+
+        meanStdDev(n_pos1, me1, st1);
+        meanStdDev(n_pos2, me1, st2);
+        cout << "s " << 1/st1.at<double>(0,0) <<endl;
+
+        for(int r = 0; r < n_pos1.size(); r++)
+        {
+            n_pos1[r].x = n_pos1[r].x*1/st1.at<double>(0,0)*fx;
+            n_pos1[r].y = n_pos1[r].y*1/st2.at<double>(0,1)*fy;
+            n_pos2[r].x = n_pos2[r].x*1/st1.at<double>(0,0)*fx;
+            n_pos2[r].y = n_pos2[r].y*1/st2.at<double>(0,1)*fy;
+        }
+
+        //for(int r = 0; r < n_pos1.size(); r++)
+        //{
+        //    n_pos1[r].x = n_pos1[r].x*fx;
+        //    n_pos1[r].y = n_pos1[r].y*fy;
+        //    n_pos2[r].x = n_pos2[r].x*fx;
+        //    n_pos2[r].y = n_pos2[r].y*fy;
+        //}
+
+        //convertPointsFromHomogeneous(n_pos1, n_pos1);       
+        //convertPointsFromHomogeneous(n_pos2, n_pos2);
+        Size mask_size = mask.size();
 
         Mat epilines1, epilines2;
-        for(int r=0;r< 8;r++)
-        {
-            //cout << "Mask num "<< mask.at<int>(r,0) << endl;
-            if((int) mask.at<char>(r,0) == 1)
-            {
-                //cout << "Point "<< pos1[r].x <<endl;
-                n_pos1.push_back(Point(pos1[r].x, pos1[r].y));
-                n_pos2.push_back(Point(pos2[r].x, pos2[r].y));
-            }
-        }
-        computeCorrespondEpilines(n_pos1, 1, E, epilines1); //Index starts with 1
-        computeCorrespondEpilines(n_pos2, 2, E, epilines2);
+        //for(int r=0;r< mask_size.height;r++)
+        //{
+        //    //cout << "Mask num "<< mask.at<int>(r,0) << endl;
+        //    if((int) mask.at<char>(r,0) == 1)
+        //    {
+        //        //cout << "Point "<< pos1[r].x <<endl;
+        //        n_pos1.push_back(Point(pos1[r].x, pos1[r].y));
+        //        n_pos2.push_back(Point(pos2[r].x, pos2[r].y));
+        //    }
+        //}
+        
+        //F = findFundamentalMat(n_pos1, n_pos2, CV_FM_8POINT, 0.0, 0.0);
+        F = findFundamentalMat(n_pos1, n_pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
+
+
+        //Moments m = moments(mask, true);
+        //cout << F << endl;
+        //Point center(m.m10/m.m00, m.m01/m.m00);
+        //cout << "Center "<< center <<endl;
+        //n_pos1 = pos1;
+        //n_pos2 = pos2;
+        computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
+        computeCorrespondEpilines(n_pos2, 2, F, epilines2);
         //cout << epilines1 <<endl;
         cout << n_pos1.size() << endl;
         
-       // Mat h = findHomography(pos1, pos2);
+        //Mat h = findHomography(pos1, pos2);
         //warpPerspective(undist_img1, undist_img2, h, undist_img1.size());
         namedWindow("image1", WINDOW_NORMAL);
         namedWindow("image2", WINDOW_NORMAL);
