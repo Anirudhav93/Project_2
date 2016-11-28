@@ -114,7 +114,7 @@ class Part_3
         //cout << "Mask "<< (int) mask.at<char>(0,1) <<endl;
 
         Mat epilines1, epilines2;
-        for(int r=0;r< 8;r++)
+        for(int r=0;r< pos1.size();r++)
         {
             //cout << "Mask num "<< mask.at<int>(r,0) << endl;
             if((int) mask.at<char>(r,0) == 1)
@@ -124,8 +124,8 @@ class Part_3
                 n_pos2.push_back(Point(pos2[r].x, pos2[r].y));
             }
         }
-        computeCorrespondEpilines(n_pos1, 1, E, epilines1); //Index starts with 1
-        computeCorrespondEpilines(n_pos2, 2, E, epilines2);
+        computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
+        computeCorrespondEpilines(n_pos2, 2, F, epilines2);
         //cout << epilines1 <<endl;
         cout << n_pos1.size() << endl;
         
