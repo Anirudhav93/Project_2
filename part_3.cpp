@@ -126,34 +126,35 @@ class Part_3
         
         //Mat H = findHomography(pos1, pos2, RANSAC, 5.0, mask);
         //cout << "H "<< H << endl;
-        Mat me1, st1, me2, st2;
+        Mat me1, st1, me2, st2, me3, me4, st3, st4;
         //convertPointsToHomogeneous(pos1, pos1);
         //convertPointsToHomogeneous(pos2, pos2);
         meanStdDev(pos1, me1, st1);
         meanStdDev(pos2, me2, st2);
 
         //cout << "Mask "<< mask << endl;
-        cout << "mean " << me1.at<double>(0,0) << endl;
+        cout << "mean1 " << 1/st1.at<double>(0,0)*pos1[1].x - me1.at<double>(0,0) << endl;
+        cout << "mean2 " << me2.at<double>(0,0) << endl;
         //cout << "std " << st << endl;
 
         for(int r = 0; r < pos1.size(); r++)
         {
-            n_pos1.push_back(Point(abs(pos1[r].x - me1.at<double>(0,0))/fx, abs(pos1[r].y - me1.at<double>(0,1))/fy));
-            n_pos2.push_back(Point(abs(pos2[r].x - me2.at<double>(0,0))/fx, abs(pos2[r].y - me2.at<double>(0,1))/fy));
+            n_pos1.push_back(Point(abs(pos1[r].x - me1.at<double>(0,0)), abs(pos1[r].y - me1.at<double>(0,1))));
+            n_pos2.push_back(Point(abs(pos2[r].x - me2.at<double>(0,0)), abs(pos2[r].y - me2.at<double>(0,1))));
 
             //n_pos1[r].y = pos1[r].y - me.at<double>(0,1);
         }
 
-        meanStdDev(n_pos1, me1, st1);
-        meanStdDev(n_pos2, me1, st2);
+        meanStdDev(n_pos1, me3, st1);
+        meanStdDev(n_pos2, me4, st2);
         cout << "s " << 1/st1.at<double>(0,0) <<endl;
 
         for(int r = 0; r < n_pos1.size(); r++)
         {
-            n_pos1[r].x = n_pos1[r].x*1/st1.at<double>(0,0)*fx;
-            n_pos1[r].y = n_pos1[r].y*1/st2.at<double>(0,1)*fy;
-            n_pos2[r].x = n_pos2[r].x*1/st1.at<double>(0,0)*fx;
-            n_pos2[r].y = n_pos2[r].y*1/st2.at<double>(0,1)*fy;
+            n_pos1[r].x = n_pos1[r].x*1/st1.at<double>(0,0);
+            n_pos1[r].y = n_pos1[r].y*1/st2.at<double>(0,1);
+            n_pos2[r].x = n_pos2[r].x*1/st1.at<double>(0,0);
+            n_pos2[r].y = n_pos2[r].y*1/st2.at<double>(0,1);
         }
 
         //for(int r = 0; r < n_pos1.size(); r++)
@@ -164,9 +165,30 @@ class Part_3
         //    n_pos2[r].y = n_pos2[r].y*fy;
         //}
 
+        Mat Ta = Mat::eye(3, 3, CV_64F), Tb = Mat::eye(3, 3, CV_64F);
+        Ta.at<double>(0,0) = 1/st1.at<double>(0,0);
+        Ta.at<double>(1,1) = 1/st1.at<double>(0,1);
+
+        Tb.at<double>(0,2) = -me1.at<double>(0,0);
+        Tb.at<double>(1,2) = -me1.at<double>(0,1);
+
+        Mat Tc = Ta*Tb;
+
+        Mat Sa = Mat::eye(3, 3, CV_64F), Sb = Mat::eye(3, 3, CV_64F);
+        Sa.at<double>(0,0) = 1/st2.at<double>(0,0);
+        Sa.at<double>(1,1) = 1/st2.at<double>(0,1);
+
+        Sb.at<double>(0,2) = -me2.at<double>(0,0);
+        Sb.at<double>(1,2) = -me2.at<double>(0,1);
+
+        Mat Sc = Sa*Sb;
+
+        cout << "Tc " << Tc << endl;
+        cout << "Sc " << Sc << endl;
+
         //convertPointsFromHomogeneous(n_pos1, n_pos1);       
         //convertPointsFromHomogeneous(n_pos2, n_pos2);
-        Size mask_size = mask.size();
+        //Size mask_size = mask.size();
 
         Mat epilines1, epilines2;
         //for(int r=0;r< mask_size.height;r++)
@@ -181,17 +203,19 @@ class Part_3
         //}
         
         //F = findFundamentalMat(n_pos1, n_pos2, CV_FM_8POINT, 0.0, 0.0);
-        F = findFundamentalMat(n_pos1, n_pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
+        Mat Fn, TSc;
+        Fn = findFundamentalMat(n_pos1, n_pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
+        cout << "Fn " << Fn << endl;
+        transpose(Sc, TSc);
+        F = TSc*Fn*Tc;
 
-
-        //Moments m = moments(mask, true);
-        //cout << F << endl;
-        //Point center(m.m10/m.m00, m.m01/m.m00);
-        //cout << "Center "<< center <<endl;
+        Mat w, u, vt;
+        SVD::compute(F, w, u, vt);
+        cout << w << endl;
         //n_pos1 = pos1;
         //n_pos2 = pos2;
-        computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
-        computeCorrespondEpilines(n_pos2, 2, F, epilines2);
+        computeCorrespondEpilines(pos1, 1, F, epilines1); //Index starts with 1
+        computeCorrespondEpilines(pos2, 2, F, epilines2);
         //cout << epilines1 <<endl;
         cout << n_pos1.size() << endl;
         
