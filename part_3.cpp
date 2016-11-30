@@ -154,10 +154,80 @@ Mat r; double p_z;
 vector<Point3f>point_in_world;
 vector<Point3f>point_in_other_cam;
 float Error;
+
+vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
+double calculate_depth(Mat R, Mat r)
+{
+    //double fx;
+    Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;   
+    //FileStorage fs ("camera.yml", FileStorage::READ);
+    //FileNode n = fs["camera_matrix"];
+    //FileNode ns = n["data"];
+    Mat pts_1, pts_2, result;
+    double depth[n_pos1.size()];
+    //cam_mat = Mat::eye(3, 3, CV_64F);
+    pts_1 = Mat::eye(3,8, CV_64F);
+    pts_2 = Mat::eye(3,8, CV_64F);
+    x_l = Mat::eye(2,8, CV_64F);
+    x_r = Mat::eye(2,8, CV_64F);
+    result = Mat::eye(1,8, CV_64F);
+    //fx = (double) ns[0];
+    int k = 0;
+    //for(int i=0;i<3;i++)
+    //{
+    //  for(int q=0;q<3;q++)
+    //  {
+    //    cam_mat.at<double>(i, q) = (double) ns[k];
+    //    k++;
+    //  }
+    //}
+    
+    convertPointsToHomogeneous(n_pos1, pos1_hg);
+    convertPointsToHomogeneous(n_pos2, pos2_hg);
+   
+    // convert vector<point2f> to Mat
+    for(int j =0;j < n_pos1.size(); j++)
+    {
+        pts_1.at<double>(0,j) = (double)pos1_hg[j].x;
+        pts_1.at<double>(1,j) = (double)pos1_hg[j].y;
+        pts_1.at<double>(2,j) = (double)pos1_hg[j].z;
+    }
+    for(int j =0;j < n_pos1.size(); j++)
+    {
+        pts_2.at<double>(0,j) = (double)pos2_hg[j].x;
+        pts_2.at<double>(1,j) = (double)pos2_hg[j].y;
+        pts_2.at<double>(2,j) = (double)pos2_hg[j].z;
+    }
+
+    //points in camera frame
+    x_l_temp = cam_mat.inv()*pts_1;
+    x_r_temp = cam_mat.inv()*pts_2;
+    
+    // converting back to euclidean
+    for(int c =0; c<2; c++)
+    {
+        x_l.row(c) = (x_l_temp.row(c)+0);
+        x_r.row(c) = (x_r_temp.row(c)+0);
+    }
+
+    //depth calculation
+    //transpose(x_l_temp, x_l_temp_t);
+    for(int b =0; b < n_pos1.size(); b++)
+    {
+    result.col(b) =( -fx*((fx*r.col(0) - x_r.at<double>(0,b)*r.col(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
+    depth[b] = result.at<double>(0);
+    }
+    return result.at<double>(0);
+
+}
+
+
+
 void compute_pairs(Mat& Rot, Mat& trans)
 {
     SVD::compute(E, Sig, U, V_t);
     transpose(V_t, V);
+    //V = V_t;
     if(determinant(U)==-1 &&determinant(V) ==-1)
     {
         cout<<"incorrect essential matrix"<<endl;
@@ -178,10 +248,14 @@ void compute_pairs(Mat& Rot, Mat& trans)
     SVD::compute(E, Sig, U, V_t);
     transpose(U,U_t);
     transpose(W,W_t);
-    
+   
+    cout<<"Sig " <<Sig<<endl;
     R1= U*W*V_t;
     R2=U*W_t*V_t;
-    U.row(2).copyTo(r);
+    cout << "U " << U << endl;
+    cout << "U row/col" << U.col(2) << endl;
+    U.col(2).copyTo(r);
+    transpose(r, r);
     int d;
     p_z = calculate_depth(R1,r);
     if(p_z<0)
@@ -225,74 +299,75 @@ void compute_pairs(Mat& Rot, Mat& trans)
         R1.copyTo(Rot);
         r.copyTo(trans);
     }
-    cout<<"actual depth is"<<calculate_depth(R2,-r)<<calculate_depth(R2,r)<<calculate_depth(R1,r)<<calculate_depth(R1,-r);
+    cout<<"actual depth is "<<calculate_depth(R2,-r)<<" "<< calculate_depth(R2,r)<<" "<<calculate_depth(R1,r)<<" "<< calculate_depth(R1,-r) << endl;
   
     return;
 }
- vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
-double calculate_depth(Mat R, Mat r)
-{
-    double fx;
-    Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;   
-    FileStorage fs ("camera.yml", FileStorage::READ);
-    FileNode n = fs["camera_matrix"];
-    FileNode ns = n["data"];
-    Mat cam_mat, pts_1, pts_2, result;
-    double depth[8];
-    cam_mat = Mat::eye(3, 3, CV_64F);
-    pts_1 = Mat::eye(3,8, CV_64F);
-    pts_2 = Mat::eye(3,8, CV_64F);
-    x_l = Mat::eye(2,8, CV_64F);
-    x_r = Mat::eye(2,8, CV_64F);
-    result = Mat::eye(1,8, CV_64F);
-    fx = (double) ns[0];
-    int k = 0;
-    for(int i=0;i<3;i++)
-    {
-      for(int q=0;q<3;q++)
-      {
-        cam_mat.at<double>(i, q) = (double) ns[k];
-        k++;
-      }
-    }
-    
-    
-    convertPointsToHomogeneous(pos1, pos1_hg);
-    convertPointsToHomogeneous(pos2, pos2_hg);
-    
-        for(int j =0;j < pos1.size(); j++)
-        {
-            pts_1.at<double>(0,j) = (double)pos1_hg[j].x;
-            pts_1.at<double>(1,j) = (double)pos1_hg[j].y;
-            pts_1.at<double>(2,j) = (double)pos1_hg[j].z;
-        }
-        for(int j =0;j < pos1.size(); j++)
-        {
-            pts_2.at<double>(0,j) = (double)pos2_hg[j].x;
-            pts_2.at<double>(1,j) = (double)pos2_hg[j].y;
-            pts_2.at<double>(2,j) = (double)pos2_hg[j].z;
-        }
 
-    //points in camera frame
-    x_l_temp = cam_mat*pts_1;
-    x_r_temp = cam_mat*pts_2;
-    
-    for(int c =0; c<2; c++)
-    {
-        x_l.row(c) = (x_l_temp.row(c)+0);
-        x_r.row(c) = (x_r_temp.row(c)+0);
-    }
-
-    //depth calculation
-    transpose(x_l_temp, x_l_temp_t);
-    for(int b =0; b < pos1.size(); b++)
-    {
-    result.col(b) =( -fx*((fx*r.col(0) - x_r.at<double>(0,b)*r.col(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
-    depth[b] = result.at<double>(0);
-    }
-    return result.at<double>(0);
-
-}
+//vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
+//double calculate_depth(Mat R, Mat r)
+//{
+//    double fx;
+//    Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;   
+//    FileStorage fs ("camera.yml", FileStorage::READ);
+//    FileNode n = fs["camera_matrix"];
+//    FileNode ns = n["data"];
+//    Mat cam_mat, pts_1, pts_2, result;
+//    double depth[8];
+//    cam_mat = Mat::eye(3, 3, CV_64F);
+//    pts_1 = Mat::eye(3,8, CV_64F);
+//    pts_2 = Mat::eye(3,8, CV_64F);
+//    x_l = Mat::eye(2,8, CV_64F);
+//    x_r = Mat::eye(2,8, CV_64F);
+//    result = Mat::eye(1,8, CV_64F);
+//    fx = (double) ns[0];
+//    int k = 0;
+//    for(int i=0;i<3;i++)
+//    {
+//      for(int q=0;q<3;q++)
+//      {
+//        cam_mat.at<double>(i, q) = (double) ns[k];
+//        k++;
+//      }
+//    }
+//    
+//    
+//    convertPointsToHomogeneous(pos1, pos1_hg);
+//    convertPointsToHomogeneous(pos2, pos2_hg);
+//    
+//        for(int j =0;j < pos1.size(); j++)
+//        {
+//            pts_1.at<double>(0,j) = (double)pos1_hg[j].x;
+//            pts_1.at<double>(1,j) = (double)pos1_hg[j].y;
+//            pts_1.at<double>(2,j) = (double)pos1_hg[j].z;
+//        }
+//        for(int j =0;j < pos1.size(); j++)
+//        {
+//            pts_2.at<double>(0,j) = (double)pos2_hg[j].x;
+//            pts_2.at<double>(1,j) = (double)pos2_hg[j].y;
+//            pts_2.at<double>(2,j) = (double)pos2_hg[j].z;
+//        }
+//
+//    //points in camera frame
+//    x_l_temp = cam_mat*pts_1;
+//    x_r_temp = cam_mat*pts_2;
+//    
+//    for(int c =0; c<2; c++)
+//    {
+//        x_l.row(c) = (x_l_temp.row(c)+0);
+//        x_r.row(c) = (x_r_temp.row(c)+0);
+//    }
+//
+//    //depth calculation
+//    transpose(x_l_temp, x_l_temp_t);
+//    for(int b =0; b < pos1.size(); b++)
+//    {
+//    result.col(b) =( -fx*((fx*r.col(0) - x_r.at<double>(0,b)*r.col(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
+//    depth[b] = result.at<double>(0);
+//    }
+//    return result.at<double>(0);
+//
+//}
 
 void reprojection_errors(std::vector<Vec2f> imagepoints)
 {
@@ -392,6 +467,6 @@ int main(int argc, char** argv)
     Mat rotation, translation;
     p.compute_pairs(rotation, translation);  
     std::vector<Vec2f> points;
-    p.reprojection_errors(points);
+    //p.reprojection_errors(points);
     return 0;    
 }
