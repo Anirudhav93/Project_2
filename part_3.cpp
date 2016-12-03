@@ -109,7 +109,7 @@ class Part_3
         Point2d pp(cx, cy);
         E = findEssentialMat(pos1, pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
         F = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
-        cout << "E "<< E <<endl;
+        //cout << "E "<< E <<endl;
         cout << "F "<< F <<endl;
         //cout << "Mask "<< (int) mask.at<char>(0,1) <<endl;
 
@@ -127,6 +127,8 @@ class Part_3
         computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
         computeCorrespondEpilines(n_pos2, 2, F, epilines2);
         //cout << epilines1 <<endl;
+        //E = findEssentialMat(n_pos1, n_pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
+        //F = findFundamentalMat(n_pos1, n_pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
         cout << n_pos1.size() << endl;
         
        // Mat h = findHomography(pos1, pos2);
@@ -166,11 +168,11 @@ double calculate_depth(Mat R, Mat r)
     Mat pts_1, pts_2, result;
     double depth[n_pos1.size()];
     //cam_mat = Mat::eye(3, 3, CV_64F);
-    pts_1 = Mat::eye(3,8, CV_64F);
-    pts_2 = Mat::eye(3,8, CV_64F);
-    x_l = Mat::eye(2,8, CV_64F);
-    x_r = Mat::eye(2,8, CV_64F);
-    result = Mat::eye(1,8, CV_64F);
+    pts_1 = Mat::eye(3,n_pos1.size(), CV_64F);
+    pts_2 = Mat::eye(3,n_pos1.size(), CV_64F);
+    x_l = Mat::eye(2,n_pos1.size(), CV_64F);
+    x_r = Mat::eye(2,n_pos1.size(), CV_64F);
+    result = Mat::eye(1,n_pos1.size(), CV_64F);
     //fx = (double) ns[0];
     int k = 0;
     //for(int i=0;i<3;i++)
@@ -186,22 +188,27 @@ double calculate_depth(Mat R, Mat r)
     convertPointsToHomogeneous(n_pos2, pos2_hg);
    
     // convert vector<point2f> to Mat
-    for(int j =0;j < n_pos1.size(); j++)
+    for(int it =0;it < n_pos1.size(); it++)
     {
-        pts_1.at<double>(0,j) = (double)pos1_hg[j].x;
-        pts_1.at<double>(1,j) = (double)pos1_hg[j].y;
-        pts_1.at<double>(2,j) = (double)pos1_hg[j].z;
+        pts_1.at<double>(0,it) = (double)pos1_hg[it].x;
+        pts_1.at<double>(1,it) = (double)pos1_hg[it].y;
+        pts_1.at<double>(2,it) = (double)pos1_hg[it].z;
     }
-    for(int j =0;j < n_pos1.size(); j++)
+    for(int it =0;it < n_pos1.size(); it++)
     {
-        pts_2.at<double>(0,j) = (double)pos2_hg[j].x;
-        pts_2.at<double>(1,j) = (double)pos2_hg[j].y;
-        pts_2.at<double>(2,j) = (double)pos2_hg[j].z;
+        pts_2.at<double>(0,it) = (double)pos2_hg[it].x;
+        pts_2.at<double>(1,it) = (double)pos2_hg[it].y;
+        pts_2.at<double>(2,it) = (double)pos2_hg[it].z;
     }
 
+    //cout << pts_1 << endl;
+    //cout << ((1/fx)*cam_mat).inv() << endl;
     //points in camera frame
-    x_l_temp = cam_mat.inv()*pts_1;
-    x_r_temp = cam_mat.inv()*pts_2;
+    //x_l_temp = ((1/fx)*cam_mat).inv()*pts_1;
+    //x_r_temp = ((1/fx)*cam_mat).inv()*pts_2;
+    x_l_temp = pts_1;
+    x_r_temp = pts_2;
+    //cout << x_l_temp <<endl;
     
     // converting back to euclidean
     for(int c =0; c<2; c++)
@@ -210,13 +217,22 @@ double calculate_depth(Mat R, Mat r)
         x_r.row(c) = (x_r_temp.row(c)+0);
     }
 
+    //cout << " x_l " << x_l << endl;
     //depth calculation
     //transpose(x_l_temp, x_l_temp_t);
-    for(int b =0; b < n_pos1.size(); b++)
+    //for(int b =0; b < n_pos1.size(); b++)
+    //{
+    //result.col(b) =( -fx*((fx*r.row(0) - x_r.at<double>(0,b)*r.row(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
+    //depth[b] = result.at<double>(0);
+    //}
+
+    for(int it =0; it < n_pos1.size(); it++)
     {
-    result.col(b) =( -fx*((fx*r.col(0) - x_r.at<double>(0,b)*r.col(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
-    depth[b] = result.at<double>(0);
+    result.col(it) =fx*(((fy*R.row(0) - x_r.at<double>(0,it)*R.row(2))*r)/((fy*R.row(0) - x_r.at<double>(0,it)*(R.row(2)))*x_l_temp.col(it))); 
+    depth[it] = result.at<double>(0);
     }
+    //for (int it = 0; it < n_pos1.size(); it++)
+    //    cout << "depth "<< result.col(it) << endl;
     return result.at<double>(0);
 
 }
@@ -225,16 +241,16 @@ double calculate_depth(Mat R, Mat r)
 
 void compute_pairs(Mat& Rot, Mat& trans)
 {
-    SVD::compute(E, Sig, U, V_t);
-    transpose(V_t, V);
+    SVD::compute(E, Sig, U, V_t, 4);
+    //transpose(V_t, V);
     //V = V_t;
-    if(determinant(U)==-1 &&determinant(V) ==-1)
+    if(determinant(U)==-1 &&determinant(V_t) ==-1)
     {
         cout<<"incorrect essential matrix"<<endl;
         return;
     }
 
-    else if(determinant(U)==-1 ||determinant(V)==-1)
+    else if(determinant(U)==-1 ||determinant(V_t)==-1)
     {
         cout<<"inverted essential"<<endl;
         E = -E;
@@ -242,20 +258,38 @@ void compute_pairs(Mat& Rot, Mat& trans)
     
     else
     {
-        cout<<"Correct essential"<<endl;
+        cout<<"Correct essential" << endl;
     }
 
-    SVD::compute(E, Sig, U, V_t);
-    transpose(U,U_t);
+    Mat sig_mat = Mat::eye(3, 3, CV_64F);
+
+    sig_mat.at<double>(0,0) = Sig.at<double>(0,0);
+    sig_mat.at<double>(1,1) = Sig.at<double>(0,1);
+    sig_mat.at<double>(2,2) = 0;
+
+    //Mat En;
+    //En = U*Sig;
+    //cout << " H E " << E << endl;
+    //transpose(En, En);
+    //E = U*sig_mat*V_t;
+    //cout << "n E " << E << endl;
+
+    SVD::compute(E, Sig, U, V_t, 4);
+    //transpose(U,U_t);
     transpose(W,W_t);
+    //Sig.at<double>(0,2) = 0;
+    //E = U*Sig*V_t;
    
     cout<<"Sig " <<Sig<<endl;
-    R1= U*W*V_t;
-    R2=U*W_t*V_t;
-    cout << "U " << U << endl;
+    R1 = U*W*V_t;
+    R2 = U*W_t*V_t;
+    cout << "det(R1) " << determinant(R1) <<endl;
+    cout << "det(R2) " << determinant(R2) <<endl;
+    cout << "R1 " << R1 << endl;
+    cout << "R2 " << R2 << endl;
     cout << "U row/col" << U.col(2) << endl;
     U.col(2).copyTo(r);
-    transpose(r, r);
+    //transpose(r, r);
     int d;
     p_z = calculate_depth(R1,r);
     if(p_z<0)
