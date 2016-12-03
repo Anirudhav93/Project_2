@@ -104,6 +104,29 @@ class Part_3
         display_image(undist_img1, undist_img2);
     }
 
+    void display_rectangle(Mat i1, Mat i2)
+    {
+        namedWindow("image1", WINDOW_NORMAL);
+        namedWindow("image2", WINDOW_NORMAL);
+
+        for(int r = 0; r < n_pos1.size(); r++)
+        {
+            rectangle(i1, Point(n_pos1[r].x-50, n_pos1[r].y-50), Point(n_pos1[r].x+50, n_pos1[r].y+50), Scalar(0,255,0), -1);
+        }
+        //imshow("image1", i1);
+        //waitKey(0);
+
+        //namedWindow("image2", WINDOW_NORMAL);
+        for(int r = 0; r < n_pos2.size(); r++)
+        {
+            rectangle(i2, Point(n_pos2[r].x-50, n_pos2[r].y-50), Point(n_pos2[r].x+50, n_pos2[r].y+50), Scalar(0,255,0), -1);
+        }
+        imshow("image1", i1);
+        imshow("image2", i2);
+        waitKey(0);
+    }
+
+
     void epipolar_image()
     {
         Point2d pp(cx, cy);
@@ -126,11 +149,9 @@ class Part_3
         }
         computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
         computeCorrespondEpilines(n_pos2, 2, F, epilines2);
-        //cout << epilines1 <<endl;
-        cout << n_pos1.size() << endl;
+        cout << "Num of inlies " << n_pos1.size() << endl;
         
-       // Mat h = findHomography(pos1, pos2);
-        //warpPerspective(undist_img1, undist_img2, h, undist_img1.size());
+        //display_rectangle(undist_img1, undist_img2);
         namedWindow("image1", WINDOW_NORMAL);
         namedWindow("image2", WINDOW_NORMAL);
         for(int r=0; r<n_pos1.size(); r++)
@@ -181,7 +202,8 @@ double calculate_depth(Mat R, Mat r)
     //    k++;
     //  }
     //}
-    
+   
+    cout << "All good " <<endl;
     convertPointsToHomogeneous(n_pos1, pos1_hg);
     convertPointsToHomogeneous(n_pos2, pos2_hg);
    
@@ -210,13 +232,16 @@ double calculate_depth(Mat R, Mat r)
         x_r.row(c) = (x_r_temp.row(c)+0);
     }
 
+    cout << "All good 2 " <<endl;
     //depth calculation
     //transpose(x_l_temp, x_l_temp_t);
     for(int b =0; b < n_pos1.size(); b++)
     {
-    result.col(b) =( -fx*((fx*r.col(0) - x_r.at<double>(0,b)*r.col(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
-    depth[b] = result.at<double>(0);
+    result.col(b) =( -fx*((fx*r.row(0) - x_r.at<double>(0,b)*r.row(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
+//result.col(b) = r.row(0);
+    //depth[b] = result.at<double>(0);
     }
+    cout << "All good 3 " << endl;
     return result.at<double>(0);
 
 }
@@ -255,7 +280,8 @@ void compute_pairs(Mat& Rot, Mat& trans)
     cout << "U " << U << endl;
     cout << "U row/col" << U.col(2) << endl;
     U.col(2).copyTo(r);
-    transpose(r, r);
+    //transpose(r, r);
+    cout << "r " << r <<endl;
     int d;
     p_z = calculate_depth(R1,r);
     if(p_z<0)
@@ -364,7 +390,7 @@ void callback1_Func(int event, int x, int y, int flags, void* userdate)
         p.pos1.push_back(Point(x, y));
         i++;
         namedWindow("image1", WINDOW_NORMAL);
-        rectangle(p.undist_img1, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
+        rectangle(p.undist_img1, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,0,255), -1);
         imshow("image1", p.undist_img1);
         waitKey(0);
     }
@@ -382,7 +408,7 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
         cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
         p.pos2.push_back(Point(x, y));
         j++;
-        rectangle(p.undist_img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
+        rectangle(p.undist_img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,0,255), -1);
         namedWindow("image2",WINDOW_NORMAL);
         imshow("image2", p.undist_img2);
         waitKey(0);
@@ -402,5 +428,8 @@ int main(int argc, char** argv)
     p.compute_pairs(rotation, translation);  
     std::vector<Vec2f> points;
     //p.reprojection_errors(points);
+    imwrite("epipolar_L.jpg", p.undist_img1);
+    imwrite("epipolar_C.jpg", p.undist_img2);
+
     return 0;    
 }
