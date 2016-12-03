@@ -109,17 +109,17 @@ class Part_3
         namedWindow("image1", WINDOW_NORMAL);
         namedWindow("image2", WINDOW_NORMAL);
 
-        for(int r = 0; r < n_pos1.size(); r++)
+        for(int it = 0; it < n_pos1.size(); it++)
         {
-            rectangle(i1, Point(n_pos1[r].x-50, n_pos1[r].y-50), Point(n_pos1[r].x+50, n_pos1[r].y+50), Scalar(0,255,0), -1);
+            rectangle(i1, Point(n_pos1[it].x-50, n_pos1[it].y-50), Point(n_pos1[it].x+50, n_pos1[it].y+50), Scalar(0,255,0), -1);
         }
         //imshow("image1", i1);
         //waitKey(0);
 
         //namedWindow("image2", WINDOW_NORMAL);
-        for(int r = 0; r < n_pos2.size(); r++)
+        for(int it = 0; it < n_pos2.size(); it++)
         {
-            rectangle(i2, Point(n_pos2[r].x-50, n_pos2[r].y-50), Point(n_pos2[r].x+50, n_pos2[r].y+50), Scalar(0,255,0), -1);
+            rectangle(i2, Point(n_pos2[it].x-50, n_pos2[it].y-50), Point(n_pos2[it].x+50, n_pos2[it].y+50), Scalar(0,255,0), -1);
         }
         imshow("image1", i1);
         imshow("image2", i2);
@@ -151,13 +151,13 @@ class Part_3
         computeCorrespondEpilines(n_pos2, 2, F, epilines2);
         cout << "Num of inlies " << n_pos1.size() << endl;
         
-        //display_rectangle(undist_img1, undist_img2);
+        display_rectangle(undist_img1, undist_img2);
         namedWindow("image1", WINDOW_NORMAL);
         namedWindow("image2", WINDOW_NORMAL);
-        for(int r=0; r<n_pos1.size(); r++)
+        for(int it=0; it<n_pos1.size(); it++)
         {
-            line(undist_img2, Point(0,-epilines1.at<float>(r,2)/epilines1.at<float>(r,1)), Point(undist_img2.cols,-(epilines1.at<float>(r,2)+epilines1.at<float>(r,0)*undist_img2.cols)/epilines1.at<float>(r,1)),Scalar(0,255,0), 5, CV_AA);
-            line(undist_img1, Point(0,-epilines2.at<float>(r,2)/epilines2.at<float>(r,1)), Point(undist_img1.cols,-(epilines2.at<float>(r,2)+epilines2.at<float>(r,0)*undist_img1.cols)/epilines2.at<float>(r,1)),Scalar(0,255,0), 5, CV_AA);
+            line(undist_img2, Point(0,-epilines1.at<float>(it,2)/epilines1.at<float>(it,1)), Point(undist_img2.cols,-(epilines1.at<float>(it,2)+epilines1.at<float>(it,0)*undist_img2.cols)/epilines1.at<float>(it,1)),Scalar(0,255,0), 5, CV_AA);
+            line(undist_img1, Point(0,-epilines2.at<float>(it,2)/epilines2.at<float>(it,1)), Point(undist_img1.cols,-(epilines2.at<float>(it,2)+epilines2.at<float>(it,0)*undist_img1.cols)/epilines2.at<float>(it,1)),Scalar(0,255,0), 5, CV_AA);
 
         }
         //line(undist_img2, Point(pos1[0].x,pos1[0].y), Point(pos1[0].x + 2000,pos1[0].y + 2000), Scalar(0, 0, 255), 5,CV_AA);
@@ -170,7 +170,7 @@ class Part_3
 Mat U, V_t, Sig, U_t, V;
 Mat R1, R2, W_t;
 Mat W = (Mat_<double>(3,3)<< 0, -1, 0, 1, 0, 0, 0, 0, 1);
-Mat r; double p_z;
+Mat t; double p_z;
 //Mat Rot, trans;
 vector<Point3f>point_in_world;
 vector<Point3f>point_in_other_cam;
@@ -187,11 +187,11 @@ double calculate_depth(Mat R, Mat r)
     Mat pts_1, pts_2, result;
     double depth[n_pos1.size()];
     //cam_mat = Mat::eye(3, 3, CV_64F);
-    pts_1 = Mat::eye(3,8, CV_64F);
-    pts_2 = Mat::eye(3,8, CV_64F);
-    x_l = Mat::eye(2,8, CV_64F);
-    x_r = Mat::eye(2,8, CV_64F);
-    result = Mat::eye(1,8, CV_64F);
+    pts_1 = Mat::eye(3,n_pos1.size(), CV_64F);
+    pts_2 = Mat::eye(3,n_pos1.size(), CV_64F);
+    x_l = Mat::eye(2,n_pos1.size(), CV_64F);
+    x_r = Mat::eye(2,n_pos1.size(), CV_64F);
+    result = Mat::eye(1, n_pos1.size(),CV_64F);
     //fx = (double) ns[0];
     int k = 0;
     //for(int i=0;i<3;i++)
@@ -203,22 +203,21 @@ double calculate_depth(Mat R, Mat r)
     //  }
     //}
    
-    cout << "All good " <<endl;
     convertPointsToHomogeneous(n_pos1, pos1_hg);
     convertPointsToHomogeneous(n_pos2, pos2_hg);
    
     // convert vector<point2f> to Mat
-    for(int j =0;j < n_pos1.size(); j++)
+    for(int it =0;it < n_pos1.size(); it++)
     {
-        pts_1.at<double>(0,j) = (double)pos1_hg[j].x;
-        pts_1.at<double>(1,j) = (double)pos1_hg[j].y;
-        pts_1.at<double>(2,j) = (double)pos1_hg[j].z;
+        pts_1.at<double>(0,it) = (double)pos1_hg[it].x;
+        pts_1.at<double>(1,it) = (double)pos1_hg[it].y;
+        pts_1.at<double>(2,it) = (double)pos1_hg[it].z;
     }
-    for(int j =0;j < n_pos1.size(); j++)
+    for(int it =0;it < n_pos1.size(); it++)
     {
-        pts_2.at<double>(0,j) = (double)pos2_hg[j].x;
-        pts_2.at<double>(1,j) = (double)pos2_hg[j].y;
-        pts_2.at<double>(2,j) = (double)pos2_hg[j].z;
+        pts_2.at<double>(0,it) = (double)pos2_hg[it].x;
+        pts_2.at<double>(1,it) = (double)pos2_hg[it].y;
+        pts_2.at<double>(2,it) = (double)pos2_hg[it].z;
     }
 
     //points in camera frame
@@ -226,22 +225,21 @@ double calculate_depth(Mat R, Mat r)
     x_r_temp = cam_mat.inv()*pts_2;
     
     // converting back to euclidean
-    for(int c =0; c<2; c++)
+    for(int it =0; it<2; it++)
     {
-        x_l.row(c) = (x_l_temp.row(c)+0);
-        x_r.row(c) = (x_r_temp.row(c)+0);
+        x_l.row(it) = (x_l_temp.row(it)+0);
+        x_r.row(it) = (x_r_temp.row(it)+0);
     }
 
-    cout << "All good 2 " <<endl;
     //depth calculation
     //transpose(x_l_temp, x_l_temp_t);
-    for(int b =0; b < n_pos1.size(); b++)
+    for(int it =0; it < n_pos1.size(); it++)
     {
-    result.col(b) =( -fx*((fx*r.row(0) - x_r.at<double>(0,b)*r.row(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
-//result.col(b) = r.row(0);
+    result.col(it) =( -fx*((fx*r.row(0) - x_r.at<double>(0,it)*r.row(2)))/((fx*R.row(0) - x_r.at<double>(0,it)*(R.row(2)))*x_l_temp.col(it))); 
+    //result.at<double>(b,0) = r.at<double>(0,0);
+    //result.row(0) = r.row(0);
     //depth[b] = result.at<double>(0);
     }
-    cout << "All good 3 " << endl;
     return result.at<double>(0);
 
 }
@@ -277,24 +275,24 @@ void compute_pairs(Mat& Rot, Mat& trans)
     cout<<"Sig " <<Sig<<endl;
     R1= U*W*V_t;
     R2=U*W_t*V_t;
-    cout << "U " << U << endl;
-    cout << "U row/col" << U.col(2) << endl;
-    U.col(2).copyTo(r);
+    //cout << "U " << U << endl;
+    //cout << "U row/col" << U.col(2) << endl;
+    U.col(2).copyTo(t);
     //transpose(r, r);
-    cout << "r " << r <<endl;
+    cout << "t " << t <<endl;
     int d;
-    p_z = calculate_depth(R1,r);
+    p_z = calculate_depth(R1,t);
     if(p_z<0)
     {   
-        p_z = calculate_depth(R1,-r);
+        p_z = calculate_depth(R1,-t);
         if(p_z<0)
         {
             
-            p_z = calculate_depth(R2,r);
+            p_z = calculate_depth(R2,t);
             if(p_z<0)
             {
                 
-                p_z=calculate_depth(R2,-r);
+                p_z=calculate_depth(R2,-t);
                 if(p_z<0)
                 {
                     cout<<"incorrect essential matrix";
@@ -303,29 +301,29 @@ void compute_pairs(Mat& Rot, Mat& trans)
                 else
                 {
                     R2.copyTo(Rot);
-                    r=-r;
-                    r.copyTo(trans);
+                    t=-t;
+                    t.copyTo(trans);
                 }
             } 
             else
              {
                  R2.copyTo(Rot);
-                 r.copyTo(trans);
+                 t.copyTo(trans);
              }
          }
         else
         {
             R1.copyTo(Rot);
-            r=-r;
-            r.copyTo(trans);
+            t=-t;
+            t.copyTo(trans);
         }
     }
     else
     {
         R1.copyTo(Rot);
-        r.copyTo(trans);
+        t.copyTo(trans);
     }
-    cout<<"actual depth is "<<calculate_depth(R2,-r)<<" "<< calculate_depth(R2,r)<<" "<<calculate_depth(R1,r)<<" "<< calculate_depth(R1,-r) << endl;
+    cout<<"actual depth is "<<calculate_depth(R2,-t)<<" "<< calculate_depth(R2,t)<<" "<<calculate_depth(R1,t)<<" "<< calculate_depth(R1,-t) << endl;
   
     return;
 }
@@ -347,10 +345,10 @@ void reprojection_errors(std::vector<Vec2f> imagepoints)
     // distortion coefficient vector
     int k = 0;
 
-    for(int r=0;r<5;r++)
+    for(int it=0;it<5;it++)
         for(int q=0;q<1;q++)
         {
-            dc.at<double>(r, q) = (double) ds[k];
+            dc.at<double>(it, q) = (double) ds[k];
             k++;
         }
 
