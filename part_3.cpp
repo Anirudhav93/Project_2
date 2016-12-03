@@ -304,115 +304,49 @@ void compute_pairs(Mat& Rot, Mat& trans)
     return;
 }
 
-//vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
-//double calculate_depth(Mat R, Mat r)
-//{
-//    double fx;
-//    Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;   
-//    FileStorage fs ("camera.yml", FileStorage::READ);
-//    FileNode n = fs["camera_matrix"];
-//    FileNode ns = n["data"];
-//    Mat cam_mat, pts_1, pts_2, result;
-//    double depth[8];
-//    cam_mat = Mat::eye(3, 3, CV_64F);
-//    pts_1 = Mat::eye(3,8, CV_64F);
-//    pts_2 = Mat::eye(3,8, CV_64F);
-//    x_l = Mat::eye(2,8, CV_64F);
-//    x_r = Mat::eye(2,8, CV_64F);
-//    result = Mat::eye(1,8, CV_64F);
-//    fx = (double) ns[0];
-//    int k = 0;
-//    for(int i=0;i<3;i++)
-//    {
-//      for(int q=0;q<3;q++)
-//      {
-//        cam_mat.at<double>(i, q) = (double) ns[k];
-//        k++;
-//      }
-//    }
-//    
-//    
-//    convertPointsToHomogeneous(pos1, pos1_hg);
-//    convertPointsToHomogeneous(pos2, pos2_hg);
-//    
-//        for(int j =0;j < pos1.size(); j++)
-//        {
-//            pts_1.at<double>(0,j) = (double)pos1_hg[j].x;
-//            pts_1.at<double>(1,j) = (double)pos1_hg[j].y;
-//            pts_1.at<double>(2,j) = (double)pos1_hg[j].z;
-//        }
-//        for(int j =0;j < pos1.size(); j++)
-//        {
-//            pts_2.at<double>(0,j) = (double)pos2_hg[j].x;
-//            pts_2.at<double>(1,j) = (double)pos2_hg[j].y;
-//            pts_2.at<double>(2,j) = (double)pos2_hg[j].z;
-//        }
-//
-//    //points in camera frame
-//    x_l_temp = cam_mat*pts_1;
-//    x_r_temp = cam_mat*pts_2;
-//    
-//    for(int c =0; c<2; c++)
-//    {
-//        x_l.row(c) = (x_l_temp.row(c)+0);
-//        x_r.row(c) = (x_r_temp.row(c)+0);
-//    }
-//
-//    //depth calculation
-//    transpose(x_l_temp, x_l_temp_t);
-//    for(int b =0; b < pos1.size(); b++)
-//    {
-//    result.col(b) =( -fx*((fx*r.col(0) - x_r.at<double>(0,b)*r.col(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
-//    depth[b] = result.at<double>(0);
-//    }
-//    return result.at<double>(0);
-//
-//}
-
 void reprojection_errors(std::vector<Vec2f> imagepoints)
 {
-Mat rot, trans;
-Mat cam_mat, dc;
-dc = Mat::eye(5, 1, CV_64F);
-cam_mat = Mat::eye(3, 3, CV_64F);
-//imagepoints = Mat::eye(8,2, CV_64F);
-FileStorage fs("camera.yml", FileStorage::READ);
+    Mat rot, trans;
+    Mat cam_mat, dc;
+    dc = Mat::eye(5, 1, CV_64F);
+    cam_mat = Mat::eye(3, 3, CV_64F);
+    //imagepoints = Mat::eye(8,2, CV_64F);
+    FileStorage fs("camera.yml", FileStorage::READ);
 
-        FileNode n = fs["camera_matrix"];
-        FileNode ns = n["data"];
-        FileNode d = fs["distortion_coefficients"];
-        FileNode ds = d["data"];
+    FileNode n = fs["camera_matrix"];
+    FileNode ns = n["data"];
+    FileNode d = fs["distortion_coefficients"];
+    FileNode ds = d["data"];
         
-        // distortion coefficient vector
-        int k = 0;
+    // distortion coefficient vector
+    int k = 0;
 
-        for(int r=0;r<5;r++)
-            for(int q=0;q<1;q++)
-            {
-                dc.at<double>(r, q) = (double) ds[k];
-                k++;
-            }
-
-
-        Mat lr, dt1, dt2;
-
-        // camera matrix
-        k = 0;
-        for(int r=0;r<3;r++)
+    for(int r=0;r<5;r++)
+        for(int q=0;q<1;q++)
         {
-            for(int q=0;q<3;q++)
-            {
-                cam_mat.at<double>(r, q) = (double) ns[k];
-                k++;
-            }
+            dc.at<double>(r, q) = (double) ds[k];
+            k++;
         }
-compute_pairs(rot, trans);
-cout<<Mat(pos1_hg);
-cout<<rot<<endl<<trans<<endl;
-projectPoints(Mat(pos1_hg), rot, trans, cam_mat, dc, imagepoints); 
-cout<<"reprojected points"<<Mat(imagepoints);
 
-}
+    Mat lr, dt1, dt2;
+
+    // camera matrix
+    k = 0;
+    for(int r=0;r<3;r++)
+    {
+        for(int q=0;q<3;q++)
+        {
+            cam_mat.at<double>(r, q) = (double) ns[k];
+            k++;
+        }
+    }
+    compute_pairs(rot, trans);
+    cout<<Mat(pos1_hg);
+    cout<<rot<<endl<<trans<<endl;
+    projectPoints(Mat(pos1_hg), rot, trans, cam_mat, dc, imagepoints); 
+    cout<<"reprojected points"<<Mat(imagepoints);
+    }
+
 }p;
 
 // mouse callback function
