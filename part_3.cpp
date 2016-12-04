@@ -453,19 +453,21 @@ class Part_3
         norm_sum_r = norm(sum_r, NORM_L2);
         cout << "Norm of above sum " << norm_sum_r << endl;
 
-        Mat tr_12, tr_13;
+        Mat tr_12, tr_13, tr_23;
         transpose(r_12_3, tr_12);
-        transpose(r_13, tr_13);
-        Mat beta1 = (tr_12*r_13);
-        Mat beta2 = (tr_13*r_23);
-        beta = -beta1/beta2;
-        Mat gamma1 = (tr_12*r_23);
-        Mat gamma2 = (tr_13*r_23);
-        gamma = -gamma1/gamma2;
+        transpose(r_23, tr_23);
+        //Mat beta1 = (tr_12*r_13);
+        //Mat beta2 = (tr_13*r_23);
+        //beta = -beta1/beta2;
+        beta = - (tr_12*r_13)/(tr_12*r_23);
+        //Mat gamma1 = (tr_12*r_23);
+        //Mat gamma2 = (tr_13*r_23);
+        //gamma = -gamma1/gamma2;
+        gamma = -(tr_23*r_13)/(tr_23*r_12_3);
         cout << "beta " << beta << endl;
         cout << "gamma " << gamma << endl;
 
-        nsum_r = r_12_3 + r_23*beta + r_13*gamma;
+        nsum_r = r_13 + r_23*beta + r_12_3*gamma;
         cout << "Sum of n vectors " << "\n" << nsum_r << endl;
 
         norm_nsum_r = norm(nsum_r, NORM_L2);
