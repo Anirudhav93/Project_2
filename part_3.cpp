@@ -274,12 +274,12 @@ class Part_3
             cout<<"Correct essential"<<endl;
         }
 
-        SVD::compute(E, Sig, U, V_t);
-        transpose(U,U_t);
+        SVD::compute(E, Sig, U, V);
+        transpose(V,V_t);
         transpose(W,W_t);
    
-        R1= U*W*V_t;
-        R2=U*W_t*V_t;
+        R1= U*W*V;
+        R2= U*W_t*V_t;
         U.col(2).copyTo(t);
         cout << "t " << t <<endl;
         int d;
@@ -424,19 +424,52 @@ class Part_3
 
 
     //Part 5
-    void rescale_tran_vec(Mat &R_12, Mat &R_23, Mat &R_13, Mat &r_12, Mat &r_23, Mat &r_13)
+    //Members
+    Mat R_12, R_13, R_23, r_12, r_23, r_13;
+    Mat sum_r, nsum_r;
+    Mat beta, gamma;
+    double norm_sum_r, norm_nsum_r; 
+
+    void rescale_tran_vec()
     {
-        double beta, gamma;
         first_image_pair(R_12, r_12);
         second_image_pair(R_23, r_23);
         third_image_pair(R_13, r_13);
-        cout<<"first trans vector"<<"\t"<<r_12<<endl;
-        cout<<"second trans vector"<<"\t"<<r_23<<endl;
-        cout<<"third trans vector"<<"\t"<<r_13<<endl;
-        normalize(r_12, r_12, 1, 0, NORM_L2, -1);
-        normalize(r_23, r_23, 1, 0, NORM_L2, -1);
-        normalize(r_13, r_13, 1, 0, NORM_L2, -1);
-        //r_12 = 
+        cout<<"first rot matrix"<<"\n"<<R_12<<endl;
+        cout<<"second rot matrix"<<"\n"<<R_23<<endl;
+        cout<<"third rot matrix"<<"\n"<<R_13<<endl;
+        //normalize(r_12, r_12, 1, 0, NORM_L2, -1);
+        //normalize(r_23, r_23, 1, 0, NORM_L2, -1);
+        //normalize(r_13, r_13, 1, 0, NORM_L2, -1);
+        cout<<"first trans vector"<<"\n"<<r_12<<endl;
+        cout<<"second trans vector"<<"\n"<<r_23<<endl;
+        cout<<"third trans vector"<<"\n"<<r_13<<endl;
+
+        Mat r_12_3 = R_23*r_12 + r_23;
+        cout << "new R1 " <<"\n"<<r_12_3<<endl;
+        sum_r = r_12_3 + r_23 + r_13;
+        cout << "Sum of vectors " << "\n" << sum_r << endl;
+        
+        norm_sum_r = norm(sum_r, NORM_L2);
+        cout << "Norm of above sum " << norm_sum_r << endl;
+
+        Mat tr_12, tr_13;
+        transpose(r_12_3, tr_12);
+        transpose(r_13, tr_13);
+        Mat beta1 = (tr_12*r_13);
+        Mat beta2 = (tr_13*r_23);
+        beta = -beta1/beta2;
+        Mat gamma1 = (tr_12*r_23);
+        Mat gamma2 = (tr_13*r_23);
+        gamma = -gamma1/gamma2;
+        cout << "beta " << beta << endl;
+        cout << "gamma " << gamma << endl;
+
+        nsum_r = r_12_3 + r_23*beta + r_13*gamma;
+        cout << "Sum of n vectors " << "\n" << nsum_r << endl;
+
+        norm_nsum_r = norm(nsum_r, NORM_L2);
+        cout << "Norm of above sum " << norm_nsum_r << endl;
     }
 
 }p;
@@ -484,8 +517,7 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
 
 int main(int argc, char** argv)
 {   
-     Mat R_12, R_13, R_23, r_12, r_23, r_13;
-     p.rescale_tran_vec(R_12, R_23, R_23, r_12, r_23, r_13);
+    p.rescale_tran_vec();
     //std::vector<Vec2f> points;
     //p.reprojection_errors(points);
     imwrite("epipolar_L.jpg", p.undist_img1);
