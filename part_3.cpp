@@ -117,10 +117,6 @@ class Part_3
         {
             rectangle(i1, Point(n_pos1[it].x-50, n_pos1[it].y-50), Point(n_pos1[it].x+50, n_pos1[it].y+50), Scalar(0,255,0), -1);
         }
-        //imshow("image1", i1);
-        //waitKey(0);
-
-        //namedWindow("image2", WINDOW_NORMAL);
         for(int it = 0; it < n_pos2.size(); it++)
         {
             rectangle(i2, Point(n_pos2[it].x-50, n_pos2[it].y-50), Point(n_pos2[it].x+50, n_pos2[it].y+50), Scalar(0,255,0), -1);
@@ -166,13 +162,6 @@ class Part_3
             mat_points_2.at<double>(1,s2) = (double)n_pos2[s2].y;
         }
 
-        //transpose(F,F); 
-        //epilines1 = F*mat_points_2;
-        //transpose(F,F);
-        //epilines2 = F*mat_points_1;
-
-        //transpose(epilines1, epilines1);
-        //transpose(epilines2, epilines2);
         computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
         computeCorrespondEpilines(n_pos2, 2, F, epilines2); 
     
@@ -198,7 +187,6 @@ class Part_3
     Mat R1, R2, W_t;
     Mat W = (Mat_<double>(3,3)<< 0, -1, 0, 1, 0, 0, 0, 0, 1);
     Mat t; double p_z;
-    //Mat Rot, trans;
     vector<Point3f>point_in_world;
     vector<Point3f>point_in_other_cam;
     float Error;
@@ -246,15 +234,12 @@ class Part_3
         }
 
         //depth calculation
-        //transpose(x_l_temp, x_l_temp_t);
         for(int it =0; it < n_pos1.size(); it++)
         {
         result.col(it) =( -fx*((fx*r.row(0) - x_r.at<double>(0,it)*r.row(2)))/((fx*R.row(0) - x_r.at<double>(0,it)*(R.row(2)))*x_l_temp.col(it))); 
         }
         return result.at<double>(0);
     }
-
-
 
     void compute_pairs(Mat& Rot, Mat& trans)
     {
@@ -327,8 +312,6 @@ class Part_3
             R1.copyTo(Rot);
             t.copyTo(trans);
         }
-        //cout<<"actual depth is "<<calculate_depth(R2,-t)<<" "<< calculate_depth(R2,t)<<" "<<calculate_depth(R1,t)<<" "<< calculate_depth(R1,-t) << endl;
-  
         return;
     }
 
@@ -374,7 +357,6 @@ class Part_3
         projectPoints(Mat(pos1_hg), rot, trans, cam_mat, dc, imagepoints); 
         cout<<"reprojected points"<<Mat(imagepoints);
     }
-
     
 
     void first_image_pair(Mat &rotation, Mat&translation)
@@ -479,7 +461,6 @@ class Part_3
         r_12_1 = R_12*r_12;
         r_23_1 = R_13*r_23;
         r_13_1 = (-R_13)*r_13;
-        //cout << "new R1 " <<"\n"<<r_12_3<<endl;
         sum_r = r_12_1 + r_23_1 + r_13_1;
         cout << "Sum of vectors " << "\n" << sum_r << endl;
         
@@ -530,7 +511,7 @@ class Part_3
             dist = fx/it1;
             H = R_12 - (r_12_1*n_p)/dist;
             Hm = cam_mat*H*cam_mat.inv();
-            //hom_imgLC = cam_mat*H.inv()*cam_mat.inv()*img_C;
+            //hom_imgLC = Hm*img_C;
             warpPerspective(img_C, hom_imgLC, Hm, img_L.size());
             absdiff(img_L, hom_imgLC, disp_LC);
             for (int it2 = 1; it2 < max_ker_len; it2+=2) 
@@ -555,14 +536,13 @@ class Part_3
                 }
             }
         }
-        cout << "here 4" <<endl;
 
         for (int it1 = 1; it1 <= 527; it1+=20) //need to set as fx
         {
             dist = fx/it1;
             H = R_13 - (r_13_1*n_p)/dist;
             Hm = cam_mat*H*cam_mat.inv();
-            //hom_imgLC = cam_mat*H.inv()*cam_mat.inv()*img_C;
+            //hom_imgLR = Hm*img_R;
             warpPerspective(img_R, hom_imgLR, Hm, img_L.size());
             absdiff(img_L, hom_imgLR, disp_LR);
             for (int it2 = 1; it2 < max_ker_len; it2+=2) 
@@ -665,31 +645,6 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
 
 int main(int argc, char** argv)
 {  
-        //Ptr<StereoBM> sbm = StereoBM::create(16,2);
-        //cout << "here 1" <<endl;
-        //sbm->SADWindowSize = 9;
-        //sbm->setBlockSize(9);
-        //cout << " here 2" <<endl;
-        //sbm->setNumDisparities(112);
-        //cout << " here 3" <<endl;
-        //sbm->setPreFilterSize(5);
-        //sbm->setPreFilterCap(61);
-        //sbm->setMinDisparity(-39);
-        //sbm->setTextureThreshold(507);
-        //sbm->setUniquenessRatio(0);
-        //sbm->setSpeckleWindowSize(0);
-        //sbm->setSpeckleRange(8);
-        //sbm->setDisp12MaxDiff(1);
-        //sbm->setDisp12MaxDiff(1);
-        //cout << " here 4" <<endl;
-
-        //sbm->setSpeckleRange(8);
-        //sbm->setSpeckleWindowSize(0);
-        //sbm->setUniquenessRatio(0);
-        //sbm->setTextureThreshold(507);
-        //sbm->setMinDisparity(-39);
-        //sbm->setPreFilterCap(61);
-        //sbm->setPreFilterSize(5);
     p.rescale_tran_vec();
     p.plane_stereo();
     //std::vector<Vec2f> points;
