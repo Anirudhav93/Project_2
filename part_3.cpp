@@ -1,6 +1,6 @@
 #include "opencv2/highgui/highgui.hpp"
-#include "opencv2/core/core.hpp" 
-#include "opencv2/imgproc/imgproc.hpp" 
+#include "opencv2/core/core.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include <string.h>
 #include <iostream>
@@ -18,16 +18,23 @@ class Part_3
     // members
     vector<Point2f> pos1,pos2;
     vector<Point2f> n_pos1,n_pos2;
-
+    Point2d pp;
+    vector<vector<Point3f> >objectPoints;
+    vector<vector<Point2f> > imagePoints;
     Mat img1, img2, undist_img1, undist_img2;
+    vector<Mat>rvecs;
+    vector<Mat>tvecs;
+    vector<float> per_view;
     double fx, fy, cx, cy;
-    Mat dc, cam_mat, E, F, mask;
+    Mat dc, M,  cam_mat, E, F, mask;
 
     // constructor
     Part_3()
     {
         dc = Mat::eye(5, 1, CV_64F);
         cam_mat = Mat::eye(3, 3, CV_64F);
+        pp.x =0.0;
+        pp.y =0.0;
     }
 
     // member functions
@@ -67,7 +74,7 @@ class Part_3
 
         FileNode d = fs["distortion_coefficients"];
         FileNode ds = d["data"];
-        
+
         // distortion coefficient vector
         int k = 0;
 
@@ -91,13 +98,18 @@ class Part_3
                 k++;
             }
         }
+        
+        //hacky correction to camera matrix
+        invert(cam_mat, M);
+        M = M*fx;
+
 
         dt1 = getOptimalNewCameraMatrix(cam_mat, dc, img1.size(), 1.0, img1.size());
         dt2 = getOptimalNewCameraMatrix(cam_mat, dc, img2.size(), 1.0, img2.size());
 
         undist_img1 = img1.clone();
         undist_img2 = img2.clone();
-        
+
         undistort(img1, undist_img1, dt1, dc);
         undistort(img2, undist_img2, dt2, dc);
 
@@ -141,7 +153,7 @@ class Part_3
             mat_points_2.at<double>(1,s2) = (double)n_pos2[s2].y;
         }
 
-           //transpose(F,F); 
+           //transpose(F,F);
            epilines1 = F*mat_points_2;
            //transpose(F,F);
            epilines2 = F*mat_points_1;
@@ -149,8 +161,8 @@ class Part_3
            transpose(epilines1, epilines1);
            transpose(epilines2, epilines2);
         computeCorrespondEpilines(n_pos1, 1, F, epilines1); //Index starts with 1
-        computeCorrespondEpilines(n_pos2, 2, F, epilines2); 
-    
+        computeCorrespondEpilines(n_pos2, 2, F, epilines2);
+
         namedWindow("image1", WINDOW_NORMAL);
         namedWindow("image2", WINDOW_NORMAL);
         for(int r=0; r<n_pos1.size(); r++)
@@ -171,25 +183,25 @@ Mat W = (Mat_<double>(3,3)<< 0, -1, 0, 1, 0, 0, 0, 0, 1);
 Mat r; double p_z;
 vector<Point3f>point_in_world;
 vector<Point3f>point_in_other_cam;
+Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;
+
 float Error;
-
+vector<Point3f>x_l_gvec;
 vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
-double calculate_depth(Mat R, Mat r)
-{
-
-    Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;   
+double calculate_depth(Mat R, Mat r, vector<Point3f> &x_l_vec, vector<Point2f> &img_pts, int g_it)
+{   
     Mat pts_1, pts_2, result;
     double depth[n_pos1.size()];
-    pts_1 = Mat::eye(3,8, CV_64F);
-    pts_2 = Mat::eye(3,8, CV_64F);
-    x_l = Mat::eye(2,8, CV_64F);
-    x_r = Mat::eye(2,8, CV_64F);
-    result = Mat::eye(1,8, CV_64F);
+    pts_1 = Mat::eye(3,n_pos1.size(), CV_64F);
+    pts_2 = Mat::eye(3,n_pos1.size(), CV_64F);
+    x_l = Mat::eye(2,n_pos1.size(), CV_64F);
+    x_r = Mat::eye(2,n_pos1.size(), CV_64F);
+    result = Mat::eye(1,n_pos1.size(), CV_64F);
     int k = 0;
-   
+
     convertPointsToHomogeneous(n_pos1, pos1_hg);
     convertPointsToHomogeneous(n_pos2, pos2_hg);
-   
+
     // convert vector<point2f> to Mat
     for(int j =0;j < n_pos1.size(); j++)
     {
@@ -205,10 +217,23 @@ double calculate_depth(Mat R, Mat r)
     }
 
     //points in camera frame
-    x_l_temp = cam_mat.inv()*pts_1;
-    x_r_temp = cam_mat.inv()*pts_2;
+    x_l_temp = M*pts_1;
+    x_r_temp = M*pts_2;
     
-    // converting back to euclidean
+    transpose(x_l_temp, x_l_temp_t);
+
+
+    cout<<"debug1 point"<<endl;
+    for(int j =0; j<n_pos1.size(); j++)
+    {
+        x_l_gvec.push_back(Point3d(x_l_temp.at <double>(0,j), x_l_temp.at <double>(1,j),x_l_temp.at<double>(2,j)));
+    }
+    
+    cout<<"debug2 point"<<"\t"<<x_l_gvec<<endl;
+    for(int j=0; j<n_pos1.size(); j++)
+    {
+     //imagePoints[g_it].push_back(n_pos1[j]);   
+    }// converting back to euclidean
     for(int c =0; c<2; c++)
     {
         x_l.row(c) = (x_l_temp.row(c)+0);
@@ -218,17 +243,19 @@ double calculate_depth(Mat R, Mat r)
     //depth calculation
     for(int b =0; b < n_pos1.size(); b++)
     {
-    result.col(b) =( -fx*((fx*r.col(0) - x_r.at<double>(0,b)*r.col(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b))); 
+    result.col(b) =( -fx*((fx*r.col(0) - x_r.at<double>(0,b)*r.col(2)))/((fx*R.row(0) - x_r.at<double>(0,b)*(R.row(2)))*x_l_temp.col(b)));
     depth[b] = result.at<double>(0);
     }
+    cout<<"debug point 9"<<endl;
     return result.at<double>(0);
 
 }
 
 
 
-void compute_pairs(Mat& Rot, Mat& trans)
+void compute_pairs(Mat& Rot, Mat& trans, vector<Point3f> &obj_vector, vector<Point2f> &img_pts, int g_it)
 {
+    Mat mask1;
     SVD::compute(E, Sig, U, V_t);
     transpose(V_t, V);
     //V = V_t;
@@ -243,7 +270,7 @@ void compute_pairs(Mat& Rot, Mat& trans)
         cout<<"inverted essential"<<endl;
         E = -E;
     }
-    
+
     else
     {
         cout<<"Correct essential"<<endl;
@@ -252,7 +279,7 @@ void compute_pairs(Mat& Rot, Mat& trans)
     SVD::compute(E, Sig, U, V_t);
     transpose(U,U_t);
     transpose(W,W_t);
-   
+
     //cout<<"Sig " <<Sig<<endl;
     R1= U*W*V_t;
     R2=U*W_t*V_t;
@@ -261,18 +288,18 @@ void compute_pairs(Mat& Rot, Mat& trans)
     U.col(2).copyTo(r);
     transpose(r, r);
     int d;
-    p_z = calculate_depth(R1,r);
+    p_z = calculate_depth(R1,r, obj_vector, img_pts, g_it);
     if(p_z<0)
-    {   
-        p_z = calculate_depth(R1,-r);
+    {
+        p_z = calculate_depth(R1,-r, obj_vector, img_pts, g_it);
         if(p_z<0)
         {
-            
-            p_z = calculate_depth(R2,r);
+
+            p_z = calculate_depth(R2,r, obj_vector, img_pts, g_it);
             if(p_z<0)
             {
-                
-                p_z=calculate_depth(R2,-r);
+
+                p_z=calculate_depth(R2,-r, obj_vector, img_pts, g_it);
                 if(p_z<0)
                 {
                     cout<<"incorrect essential matrix";
@@ -283,12 +310,14 @@ void compute_pairs(Mat& Rot, Mat& trans)
                     R2.copyTo(Rot);
                     r=-r;
                     r.copyTo(trans);
+                    cout<<"debug3"<<endl;
                 }
-            } 
+            }
             else
              {
                  R2.copyTo(Rot);
                  r.copyTo(trans);
+                 cout<<"debug4"<<endl;
              }
          }
         else
@@ -296,60 +325,81 @@ void compute_pairs(Mat& Rot, Mat& trans)
             R1.copyTo(Rot);
             r=-r;
             r.copyTo(trans);
+            cout<<"debug5"<<endl;
         }
     }
     else
     {
         R1.copyTo(Rot);
         r.copyTo(trans);
+        cout<<"debug6"<<endl;
     }
+
+    recoverPose(E, n_pos1, n_pos2, Rot, trans, fx, pp, mask1);
    // cout<<"actual depth is "<<calculate_depth(R2,-r)<<" "<< calculate_depth(R2,r)<<" "<<calculate_depth(R1,r)<<" "<< calculate_depth(R1,-r) << endl;
-  
+  cout<<"debug point8"<<endl;
     return;
 }
 
-void reprojection_errors(std::vector<Vec2f> imagepoints)
+void reprojection( Mat &rot, Mat &trans)
 {
-Mat rot, trans;
-Mat cam_mat, dc;
-dc = Mat::eye(5, 1, CV_64F);
-cam_mat = Mat::eye(3, 3, CV_64F);
-//imagepoints = Mat::eye(8,2, CV_64F);
-FileStorage fs("camera.yml", FileStorage::READ);
+Mat imagepoints;
+//Mat cam_mat, dc;
+Matx<double, 3, 1> trans_vec;
+Matx<double, 3, 1> rot_vec;
+vector<Point2f> d2_vector;
 
-        FileNode n = fs["camera_matrix"];
-        FileNode ns = n["data"];
-        FileNode d = fs["distortion_coefficients"];
-        FileNode ds = d["data"];
-        
-        // distortion coefficient vector
-        int k = 0;
-
-        for(int r=0;r<5;r++)
-            for(int q=0;q<1;q++)
-            {
-                dc.at<double>(r, q) = (double) ds[k];
-                k++;
-            }
-
-
-        Mat lr, dt1, dt2;
-
-        // camera matrix
-        k = 0;
-        for(int r=0;r<3;r++)
-        {
-            for(int q=0;q<3;q++)
-            {
-                cam_mat.at<double>(r, q) = (double) ns[k];
-                k++;
-            }
-        }
-compute_pairs(rot, trans);
-cout<<Mat(pos1_hg);
-cout<<rot<<endl<<trans<<endl;
-projectPoints(Mat(pos1_hg), rot, trans, cam_mat, dc, imagepoints); 
+Rodrigues(rot, rot_vec);
+trans_vec.operator()(0,0) = trans.at<double>(0,0);
+trans_vec.operator()(1,0) = trans.at<double>(1,0);
+trans_vec.operator()(2,0) = trans.at<double>(2,0);
+//dc = Mat::eye(5, 1, CV_64F);
+//cam_mat = Mat::eye(3, 3, CV_64F);
+//FileStorage fs("camera.yml", FileStorage::READ);
+//
+//        FileNode n = fs["camera_matrix"];
+//        FileNode ns = n["data"];
+//        FileNode d = fs["distortion_coefficients"];
+//        FileNode ds = d["data"];
+//
+//        // distortion coefficient vector
+//        int k = 0;
+//        for(int r=0;r<5;r++)
+//            for(int q=0;q<1;q++)
+//            {
+//                dc.at<double>(r, q) = (double) ds[k];
+//                k++;
+//            }
+//
+//
+//        Mat lr, dt1, dt2;
+//
+//        // camera matrix
+//        k = 0;
+//        for(int r=0;r<3;r++)
+//        {
+//            for(int q=0;q<3;q++)
+//            {
+//                cam_mat.at<double>(r, q) = (double) ns[k];
+//                k++;
+//            }
+//        }
+//compute_pairs(rot, trans, d_vector, d2_vector, 0);
+//cout<<Mat(pos1_hg);
+//cout<<rot<<endl<<trans<<endl;
+cout<<"camera coordinates"<<"\t"<<x_l_temp<<endl;
+cout<<"previously used:-"<<endl<<Mat(pos1_hg)<<endl;
+projectPoints(x_l_temp_t, rot, trans_vec, cam_mat, dc, imagepoints);
 cout<<"reprojected points"<<Mat(imagepoints);
+namedWindow("image1", WINDOW_NORMAL);
+namedWindow("image2", WINDOW_NORMAL);
+        for(int r=0; r<n_pos1.size(); r++)
+        {
+         rectangle(undist_img2, Point(imagepoints.at<double>(r,0)-70, imagepoints.at<double>(r,1)-70), Point(imagepoints.at<double>(r,0)+70, imagepoints.at<double>(r,1)+70), Scalar(255, 0,0), -1);   
+        }
+        imshow("image1", undist_img1);
+        imshow("image2", undist_img2);
+        waitKey(0);
 
 }
 
@@ -363,9 +413,15 @@ void first_image_pair(Mat &rotation, Mat&translation)
     init_image(a, b);
     undistort_image();
     epipolar_image();
-    compute_pairs(rotation, translation);
+    compute_pairs(rotation, translation, objectPoints[0], imagePoints[0],0);
+    objectPoints.push_back(x_l_gvec);
+    rvecs.push_back(rotation);
+    tvecs.push_back(translation);
+    imagePoints.push_back(n_pos1);
+    reprojection(rotation, translation);
     pos1.clear();
     pos2.clear();
+    x_l_gvec.clear();
     n_pos1.clear();
     n_pos2.clear();
 }
@@ -378,9 +434,14 @@ void second_image_pair(Mat &rotation, Mat&translation)
     init_image(a, b);
     undistort_image();
     epipolar_image();
-    compute_pairs(rotation, translation);
+    compute_pairs(rotation, translation, objectPoints[1], imagePoints[0], 1);
+    objectPoints.push_back(x_l_gvec);
+    tvecs.push_back(translation);
+    rvecs.push_back(rotation);
+    reprojection(rotation, translation);
     pos1.clear();
     pos2.clear();
+    x_l_gvec.clear();
     n_pos1.clear();
     n_pos2.clear();
 }
@@ -393,9 +454,15 @@ void third_image_pair(Mat &rotation, Mat &translation)
     init_image(a, b);
     undistort_image();
     epipolar_image();
-    compute_pairs(rotation, translation);
+    compute_pairs(rotation, translation, objectPoints[2], imagePoints[2], 2);
+    objectPoints.push_back(x_l_gvec);
+    imagePoints.push_back(n_pos1);
+    reprojection(rotation, translation);
+    tvecs.push_back(translation);
+    rvecs.push_back(rotation);
     pos1.clear();
     pos2.clear();
+    x_l_gvec.clear();
     n_pos1.clear();
     n_pos2.clear();
 }
@@ -414,9 +481,41 @@ void rescale_tran_vec(Mat &R_12, Mat &R_23, Mat &R_13, Mat &r_12, Mat &r_23, Mat
     normalize(r_12, r_12, 1, 0, NORM_L2, -1);
     normalize(r_23, r_23, 1, 0, NORM_L2, -1);
     normalize(r_13, r_13, 1, 0, NORM_L2, -1);
-    r_12 = 
+
 }
 
+double computeReprojectionErrors( const vector<vector<Point3f> >& objectPoints,
+                          const vector<vector<Point2f> >& imagePoints,
+                          const vector<Mat>& rvecs, const vector<Mat>& tvecs,
+                          const Mat& cameraMatrix , const Mat& distCoeffs,
+                          vector<float>& perViewErrors)
+{
+cout<<"computing"<<endl;
+double final_err;
+vector<Point2f> imagePoints2;
+int i, totalPoints = 0;
+double totalErr = 0, err;
+perViewErrors.resize(objectPoints.size());
+cout<<"computing2"<<endl;
+cout<<"computing size"<<objectPoints.size();
+for( i = 0; i < 3; i++ )
+{
+  projectPoints( Mat(objectPoints[i]), rvecs[i], tvecs[i], cameraMatrix,  // project
+                                       distCoeffs, imagePoints2);
+  err = norm(imagePoints[i], imagePoints2, CV_L2);              // difference
+
+  int n = (int)objectPoints[i].size();
+  perViewErrors[i] = (float) std::sqrt(err*err/n);                        // save for this view
+  totalErr        += err*err;                                             // sum it up
+  totalPoints     += n;
+  cout<<"computing iteration"<<i;
+}
+cout<<"computing3"<<endl;
+final_err=sqrt(totalErr/totalPoints);
+//cout<<"the reprojection error is"<<perViewErrors[0]<<"\t"<<perViewErrors[1]<<"\t"<<perViewErrors[2];
+cout<<"Success!!"<<totalPoints;        
+return std::sqrt(totalErr/totalPoints);              // calculate the arithmetical mean
+}
 }p;
 
 // mouse callback function
@@ -425,12 +524,12 @@ void callback1_Func(int event, int x, int y, int flags, void* userdate)
     if (event == EVENT_LBUTTONDOWN )
     {
         static int i=0;
-        if (i >= 30) 
+        if (i >= 30)
         {
             cout << "Too many points clicked." <<endl;
             return;
         }
-       // cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
+        cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;
         p.pos1.push_back(Point(x, y));
         i++;
         namedWindow("image1", WINDOW_NORMAL);
@@ -444,12 +543,12 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
 {
     if (event == EVENT_LBUTTONDOWN )
     {   static int j=0;
-        if (j >= 30) 
+        if (j >= 30)
         {
             cout << "Too many points clicked." <<endl;
             return;
         }
-       // cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
+        cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;
         p.pos2.push_back(Point(x, y));
         j++;
         rectangle(p.undist_img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,255,0), -1);
@@ -461,10 +560,12 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
 
 
 int main(int argc, char** argv)
-{   
+{
+    // p.g_it=0;
      Mat R_12, R_13, R_23, r_12, r_23, r_13;
      p.rescale_tran_vec(R_12, R_23, R_23, r_12, r_23, r_13);
+     //p.computeReprojectionErrors(p.objectPoints, p.imagePoints, p.rvecs, p.tvecs, p.cam_mat, p.dc, p.per_view);
     //std::vector<Vec2f> points;
     //p.reprojection_errors(points);
-    return 0;    
+    return 0;
 }
