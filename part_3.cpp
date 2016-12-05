@@ -445,29 +445,31 @@ class Part_3
         cout<<"second trans vector"<<"\n"<<r_23<<endl;
         cout<<"third trans vector"<<"\n"<<r_13<<endl;
 
-        Mat r_12_3 = R_23*r_12 + r_23;
-        cout << "new R1 " <<"\n"<<r_12_3<<endl;
-        sum_r = r_12_3 + r_23 + r_13;
+        Mat r_12_1 = R_12*r_12;
+        Mat r_23_1 = R_13*r_23;
+        Mat r_13_1 = (-R_13)*r_13;
+        //cout << "new R1 " <<"\n"<<r_12_3<<endl;
+        sum_r = r_12_1 + r_23_1 + r_13_1;
         cout << "Sum of vectors " << "\n" << sum_r << endl;
         
         norm_sum_r = norm(sum_r, NORM_L2);
         cout << "Norm of above sum " << norm_sum_r << endl;
 
         Mat tr_12, tr_13, tr_23;
-        transpose(r_12_3, tr_12);
-        transpose(r_23, tr_23);
+        transpose(r_12_1, tr_12);
+        transpose(r_23_1, tr_23);
         //Mat beta1 = (tr_12*r_13);
         //Mat beta2 = (tr_13*r_23);
         //beta = -beta1/beta2;
-        beta = - (tr_12*r_13)/(tr_12*r_23);
+        beta = - (tr_12*r_13_1)/(tr_23*r_13_1);
         //Mat gamma1 = (tr_12*r_23);
         //Mat gamma2 = (tr_13*r_23);
         //gamma = -gamma1/gamma2;
-        gamma = -(tr_23*r_13)/(tr_23*r_12_3);
+        gamma = -(tr_12*r_23_1)/(tr_23*r_13_1);
         cout << "beta " << beta << endl;
         cout << "gamma " << gamma << endl;
 
-        nsum_r = r_13 + r_23*beta + r_12_3*gamma;
+        nsum_r = r_12_1 + r_23_1*beta + r_13_1*gamma;
         cout << "Sum of n vectors " << "\n" << nsum_r << endl;
 
         norm_nsum_r = norm(nsum_r, NORM_L2);
