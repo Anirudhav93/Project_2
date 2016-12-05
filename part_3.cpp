@@ -376,9 +376,6 @@ class Part_3
     }
 
     
-    //vector<Point2f> imgLC_pos1,imgLC_pos2;
-    //Mat imgLC_pos1 = Mat::eye(2, n_pos1.size(), CV_64F);
-    //Mat imgLC_pos2 = Mat::eye(2, n_pos1.size(), CV_64F);
 
     void first_image_pair(Mat &rotation, Mat&translation)
     {
@@ -393,26 +390,17 @@ class Part_3
         imgLC_pos1 = Mat::eye(2, n_pos1.size(), CV_64F);
         imgLC_pos2 = Mat::eye(2, n_pos1.size(), CV_64F);
 
-        //cout << "here " << imgLC_pos1 << endl;
         for(int it=0;it< n_pos1.size();it++)
         {
-            //imgLC_pos1.push_back(Point(n_pos1[it].x, n_pos1[it].y));
-            //imgLC_pos2.push_back(Point(n_pos2[it].x, n_pos2[it].y));
-            //cout << "check 1" <<endl;
-            imgLC_pos1.at<double>(0,it) = (double)n_pos1[it].x;
-            imgLC_pos1.at<double>(1,it) = (double)n_pos1[it].y;
-            //cout << "check 2" <<endl;
-            //imgLC_pos2.at<double>(it,0) = (double)n_pos2[it].x;
-            //imgLC_pos2.at<double>(it,1) = (double)n_pos2[it].y;
+            imgLC_pos1.col(it) = (Mat_<double>(2,1)<< n_pos1[it].x, n_pos1[it].y);
+            imgLC_pos2.col(it) = (Mat_<double>(2,1)<< n_pos2[it].x, n_pos2[it].y);
         }
-        //cout << "imgLC " << imgLC_pos1 << endl;
         pos1.clear();
         pos2.clear();
         n_pos1.clear();
         n_pos2.clear();
     }
 
-    //vector<Point2f> imgCR_pos1,imgCR_pos2;
     Mat imgCR_pos1, imgCR_pos2;
 
     void second_image_pair(Mat &rotation, Mat&translation)
@@ -430,8 +418,6 @@ class Part_3
 
         for(int it=0;it< n_pos1.size();it++)
         {
-            //imgCR_pos1.push_back(Point(n_pos1[it].x, n_pos1[it].y));
-            //imgCR_pos2.push_back(Point(n_pos2[it].x, n_pos2[it].y));
             imgCR_pos1.col(it) = (Mat_<double>(2,1)<< n_pos1[it].x, n_pos1[it].y);
             imgCR_pos2.col(it) = (Mat_<double>(2,1)<< n_pos2[it].x, n_pos2[it].y);
         }
@@ -441,7 +427,6 @@ class Part_3
         n_pos2.clear();
     }
 
-    //vector<Point2f> imgLR_pos1,imgLR_pos2;
     Mat imgLR_pos1, imgLR_pos2;
 
     void third_image_pair(Mat &rotation, Mat &translation)
@@ -459,8 +444,6 @@ class Part_3
 
         for(int it=0;it< n_pos1.size();it++)
         {
-            //imgLR_pos1.push_back(Point(n_pos1[it].x, n_pos1[it].y));
-            //imgLR_pos2.push_back(Point(n_pos2[it].x, n_pos2[it].y));
             imgLR_pos1.col(it) = (Mat_<double>(3,1)<< n_pos1[it].x, n_pos1[it].y, 1);
             imgLR_pos2.col(it) = (Mat_<double>(3,1)<< n_pos2[it].x, n_pos2[it].y, 1);
         }
@@ -477,7 +460,7 @@ class Part_3
     Mat sum_r, nsum_r;
     Mat beta, gamma;
     double norm_sum_r, norm_nsum_r; 
-
+    Mat r_12_1, r_23_1, r_13_1;
     void rescale_tran_vec()
     {
         first_image_pair(R_12, r_12);
@@ -493,23 +476,31 @@ class Part_3
         cout<<"second trans vector"<<"\n"<<r_23<<endl;
         cout<<"third trans vector"<<"\n"<<r_13<<endl;
 
-        Mat r_12_3 = R_23*r_12 + r_23;
-        cout << "new R1 " <<"\n"<<r_12_3<<endl;
-        sum_r = r_12_3 + r_23 + r_13;
+        r_12_1 = R_12*r_12;
+        r_23_1 = R_13*r_23;
+        r_13_1 = (-R_13)*r_13;
+        //cout << "new R1 " <<"\n"<<r_12_3<<endl;
+        sum_r = r_12_1 + r_23_1 + r_13_1;
         cout << "Sum of vectors " << "\n" << sum_r << endl;
         
         norm_sum_r = norm(sum_r, NORM_L2);
         cout << "Norm of above sum " << norm_sum_r << endl;
 
         Mat tr_12, tr_13, tr_23;
-        transpose(r_12_3, tr_12);
-        transpose(r_23, tr_23);
-        beta = - (tr_12*r_13)/(tr_12*r_23);
-        gamma = -(tr_23*r_13)/(tr_23*r_12_3);
+        transpose(r_12_1, tr_12);
+        transpose(r_23_1, tr_23);
+        //Mat beta1 = (tr_12*r_13);
+        //Mat beta2 = (tr_13*r_23);
+        //beta = -beta1/beta2;
+        beta = - (tr_12*r_13_1)/(tr_23*r_13_1);
+        //Mat gamma1 = (tr_12*r_23);
+        //Mat gamma2 = (tr_13*r_23);
+        //gamma = -gamma1/gamma2;
+        gamma = -(tr_12*r_23_1)/(tr_23*r_13_1);
         cout << "beta " << beta << endl;
         cout << "gamma " << gamma << endl;
 
-        nsum_r = r_13 + r_23*beta + r_12_3*gamma;
+        nsum_r = r_12_1 + r_23_1*beta + r_13_1*gamma;
         cout << "Sum of n vectors " << "\n" << nsum_r << endl;
 
         norm_nsum_r = norm(nsum_r, NORM_L2);
@@ -518,55 +509,61 @@ class Part_3
 
     // Part 6
     // Members
-    Mat H, hom_imgLR, hom_imgCR, disp_LR;
+    Mat H, hom_imgLC, hom_imgLR;
+    Mat img_L, img_C, img_R;
+    Mat disp_LC[530];
 
     void plane_stereo()
     {
         double dist;
         Mat n_p = (Mat_<double>(1,3)<< 0, 0, -1);
-        for (int it = 1; it <= 527; it++) //need to set as fx
+        img_L = imread("IMG_L.JPG", 0);
+        img_C = imread("IMG_C.JPG", 0);
+        img_R = imread("IMG_R.JPG", 0);
+        for (int it = 1; it <= 527; it+=20) //need to set as fx
         {
             dist = fx/it;
-            H = R_13 - (r_13*n_p)/dist;
-            //hom_imgLR = cam_mat*H*cam_mat.inv()*imgLR_pos2;
-            //hom_imgLR = cam_mat*H.inv()*cam_mat.inv()*imgLR_pos2;
+            H = R_12 - (r_12_1*n_p)/dist;
+            cout << " here " << endl;
+            hom_imgLR = cam_mat*H*cam_mat.inv()*img_C;
+            //hom_imgLC = cam_mat*H.inv()*cam_mat.inv()*img_C;
             //warpPerspective(img1, hom_imgLR, H, img2.size());
-            //disp_LR = abs(hom_imgLR - imgLR_pos1);
+            disp_LC[it] = abs(hom_imgLC - img_L);
             //disp_LR = abs(hom_imgLR - img1);
         }
         //cout << "disp " << disp_LR << endl;
         //cout << hom_imgLR << endl;
         
-        Mat disp;
-        //warpPerspective(img1, disp, H, img2.size());
-        Ptr<StereoBM> sbm = StereoBM::create(16, 2);
-        //cout << "here 1" <<endl;
-        //sbm->SADWindowSize(9);
-        sbm->setBlockSize(9);
-        //cout << " here 2" <<endl;
-        sbm->setNumDisparities(112);
-        //cout << " here 3" <<endl;
-        sbm->setPreFilterSize(5);
-        sbm->setPreFilterCap(61);
-        sbm->setMinDisparity(-39);
-        sbm->setTextureThreshold(507);
-        sbm->setUniquenessRatio(0);
-        sbm->setSpeckleWindowSize(0);
-        sbm->setSpeckleRange(8);
-        sbm->setDisp12MaxDiff(1);
-        //*sbm(img1, img2, disp);
-        cout << "here end" << endl;
-        Mat g_img1, g_img2;
-        cvtColor(img1, g_img1, CV_BGR2GRAY);
-        cvtColor(img2, g_img2, CV_BGR2GRAY);
-        //img1.convertTo(g_img1, CV_8UC1);
-        //img2.convertTo(g_img2, CV_8UC1);
-        cout << "convert worked" << endl;
-        sbm->compute(g_img1, g_img2, disp);
-        cout << "here actual end" <<endl;
+        //Mat disp;
+        ////warpPerspective(img1, disp, H, img2.size());
+        //Ptr<StereoBM> sbm = StereoBM::create(16, 2);
+        ////cout << "here 1" <<endl;
+        ////sbm->SADWindowSize(9);
+        //sbm->setBlockSize(9);
+        ////cout << " here 2" <<endl;
+        //sbm->setNumDisparities(112);
+        ////cout << " here 3" <<endl;
+        //sbm->setPreFilterSize(5);
+        //sbm->setPreFilterCap(61);
+        //sbm->setMinDisparity(-39);
+        //sbm->setTextureThreshold(507);
+        //sbm->setUniquenessRatio(0);
+        //sbm->setSpeckleWindowSize(0);
+        //sbm->setSpeckleRange(8);
+        //sbm->setDisp12MaxDiff(1);
+        ////*sbm(img1, img2, disp);
+        //cout << "here end" << endl;
+        //Mat g_img1, g_img2;
+        //cvtColor(img1, g_img1, CV_BGR2GRAY);
+        //cvtColor(img2, g_img2, CV_BGR2GRAY);
+        ////img1.convertTo(g_img1, CV_8UC1);
+        ////img2.convertTo(g_img2, CV_8UC1);
+        //cout << "convert worked" << endl;
+        //sbm->compute(g_img1, g_img2, disp);
+        //cout << "here actual end" <<endl;
 
         namedWindow("disp_image", WINDOW_NORMAL);
-        imshow("disp_image", disp);
+        imshow("disp_image", disp_LC[0]);
         waitKey(0);
 
     }
