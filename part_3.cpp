@@ -509,9 +509,12 @@ class Part_3
 
     // Part 6
     // Members
-    Mat H, hom_imgLC, hom_imgLR;
+    Mat H, Hm, hom_imgLC, hom_imgLR;
     Mat img_L, img_C, img_R;
-    Mat disp_LC[530];
+    Mat disp_LC, disp_LR, filt_LC[530], filt_LR[530];
+    Mat min_disp_LC, min_disp_LR;
+
+    int max_ker_len, sad_size1, sad_size2;
 
     void plane_stereo()
     {
@@ -520,17 +523,73 @@ class Part_3
         img_L = imread("IMG_L.JPG", 0);
         img_C = imread("IMG_C.JPG", 0);
         img_R = imread("IMG_R.JPG", 0);
-        for (int it = 1; it <= 527; it+=20) //need to set as fx
+        max_ker_len = 31;
+        sad_size1 = 0;
+        for (int it1 = 1; it1 <= 527; it1+=20) //need to set as fx
         {
-            dist = fx/it;
+            dist = fx/it1;
             H = R_12 - (r_12_1*n_p)/dist;
-            cout << " here " << endl;
-            hom_imgLR = cam_mat*H*cam_mat.inv()*img_C;
+            Hm = cam_mat*H*cam_mat.inv();
             //hom_imgLC = cam_mat*H.inv()*cam_mat.inv()*img_C;
-            //warpPerspective(img1, hom_imgLR, H, img2.size());
-            disp_LC[it] = abs(hom_imgLC - img_L);
+            warpPerspective(img_C, hom_imgLC, Hm, img_L.size());
+            absdiff(img_L, hom_imgLC, disp_LC);
             //disp_LR = abs(hom_imgLR - img1);
+            for (int it2 = 1; it2 < max_ker_len; it2+=2) 
+            {
+                blur(disp_LC, filt_LC[sad_size1], Size(it2, it2), Point(-1,-1));
+            }
+            sad_size1++;
         }
+        
+        min_disp_LC = img_L.clone();
+        for (int it1 = 0; it1 <= img_L.rows; it1++)
+        {
+            for (int it2 = 0; it2 <= img_L.cols; it2++)
+            {
+                min_disp_LC.at<double>(it1, it2) = filt_LC[0].at<double>(it1, it2);
+                for (int it3 = 1; it3 < sad_size1; it3++)
+                {
+                    if (filt_LC[it3].at<double>(it1, it2) < min_disp_LC.at<double>(it1, it2))
+                    {
+                        min_disp_LC.at<double>(it1, it2) = filt_LC[it3].at<double>(it1, it2);
+                    }
+                }
+            }
+        }
+        cout << "here 4" <<endl;
+
+        for (int it1 = 1; it1 <= 527; it1+=20) //need to set as fx
+        {
+            dist = fx/it1;
+            H = R_13 - (r_13_1*n_p)/dist;
+            Hm = cam_mat*H*cam_mat.inv();
+            //hom_imgLC = cam_mat*H.inv()*cam_mat.inv()*img_C;
+            warpPerspective(img_R, hom_imgLR, Hm, img_L.size());
+            absdiff(img_L, hom_imgLR, disp_LR);
+            //disp_LR = abs(hom_imgLR - img1);
+            for (int it2 = 1; it2 < max_ker_len; it2+=2) 
+            {
+                blur(disp_LR, filt_LR[sad_size2], Size(it2, it2), Point(-1,-1));
+            }
+            sad_size2++;
+        }
+        
+        min_disp_LR = img_L.clone();
+        for (int it1 = 0; it1 <= img_L.rows; it1++)
+        {
+            for (int it2 = 0; it2 <= img_L.cols; it2++)
+            {
+                min_disp_LR.at<double>(it1, it2) = filt_LR[0].at<double>(it1, it2);
+                for (int it3 = 1; it3 < sad_size2; it3++)
+                {
+                    if (filt_LR[it3].at<double>(it1, it2) < min_disp_LR.at<double>(it1, it2))
+                    {
+                        min_disp_LR.at<double>(it1, it2) = filt_LR[it3].at<double>(it1, it2);
+                    }
+                }
+            }
+        }
+
         //cout << "disp " << disp_LR << endl;
         //cout << hom_imgLR << endl;
         
@@ -562,8 +621,11 @@ class Part_3
         //sbm->compute(g_img1, g_img2, disp);
         //cout << "here actual end" <<endl;
 
-        namedWindow("disp_image", WINDOW_NORMAL);
-        imshow("disp_image", disp_LC[0]);
+        namedWindow("disp_image1", WINDOW_NORMAL);
+        namedWindow("disp_image2", WINDOW_NORMAL);
+
+        imshow("disp_image1", min_disp_LC);
+        imshow("disp_image2", min_disp_LR);
         waitKey(0);
 
     }
