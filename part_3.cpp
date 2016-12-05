@@ -533,7 +533,6 @@ class Part_3
             //hom_imgLC = cam_mat*H.inv()*cam_mat.inv()*img_C;
             warpPerspective(img_C, hom_imgLC, Hm, img_L.size());
             absdiff(img_L, hom_imgLC, disp_LC);
-            //disp_LR = abs(hom_imgLR - img1);
             for (int it2 = 1; it2 < max_ker_len; it2+=2) 
             {
                 blur(disp_LC, filt_LC[sad_size1], Size(it2, it2), Point(-1,-1));
@@ -566,7 +565,6 @@ class Part_3
             //hom_imgLC = cam_mat*H.inv()*cam_mat.inv()*img_C;
             warpPerspective(img_R, hom_imgLR, Hm, img_L.size());
             absdiff(img_L, hom_imgLR, disp_LR);
-            //disp_LR = abs(hom_imgLR - img1);
             for (int it2 = 1; it2 < max_ker_len; it2+=2) 
             {
                 blur(disp_LR, filt_LR[sad_size2], Size(it2, it2), Point(-1,-1));
@@ -589,43 +587,35 @@ class Part_3
                 }
             }
         }
-
-        //cout << "disp " << disp_LR << endl;
-        //cout << hom_imgLR << endl;
         
-        //Mat disp;
-        ////warpPerspective(img1, disp, H, img2.size());
-        //Ptr<StereoBM> sbm = StereoBM::create(16, 2);
-        ////cout << "here 1" <<endl;
-        ////sbm->SADWindowSize(9);
-        //sbm->setBlockSize(9);
-        ////cout << " here 2" <<endl;
-        //sbm->setNumDisparities(112);
-        ////cout << " here 3" <<endl;
-        //sbm->setPreFilterSize(5);
-        //sbm->setPreFilterCap(61);
-        //sbm->setMinDisparity(-39);
-        //sbm->setTextureThreshold(507);
-        //sbm->setUniquenessRatio(0);
-        //sbm->setSpeckleWindowSize(0);
-        //sbm->setSpeckleRange(8);
-        //sbm->setDisp12MaxDiff(1);
-        ////*sbm(img1, img2, disp);
-        //cout << "here end" << endl;
-        //Mat g_img1, g_img2;
-        //cvtColor(img1, g_img1, CV_BGR2GRAY);
-        //cvtColor(img2, g_img2, CV_BGR2GRAY);
-        ////img1.convertTo(g_img1, CV_8UC1);
-        ////img2.convertTo(g_img2, CV_8UC1);
-        //cout << "convert worked" << endl;
-        //sbm->compute(g_img1, g_img2, disp);
-        //cout << "here actual end" <<endl;
+        Mat disp1, disp2;
+        Ptr<StereoBM> sbm = StereoBM::create(16, 2);
+        sbm->setBlockSize(9);
+        sbm->setNumDisparities(112);
+        sbm->setPreFilterSize(5);
+        sbm->setPreFilterCap(61);
+        sbm->setMinDisparity(-39);
+        sbm->setTextureThreshold(507);
+        sbm->setUniquenessRatio(0);
+        sbm->setSpeckleWindowSize(0);
+        sbm->setSpeckleRange(8);
+        sbm->setDisp12MaxDiff(1);
+        sbm->compute(img_L, img_C, disp1);
+        sbm->compute(img_L, img_R, disp2);
+
+        destroyAllWindows();
 
         namedWindow("disp_image1", WINDOW_NORMAL);
         namedWindow("disp_image2", WINDOW_NORMAL);
 
+        namedWindow("disp_image_f1", WINDOW_NORMAL);
+        namedWindow("disp_image_f2", WINDOW_NORMAL);
+
         imshow("disp_image1", min_disp_LC);
         imshow("disp_image2", min_disp_LR);
+
+        imshow("disp_image_f1", disp1);
+        imshow("disp_image_f2", disp2);
         waitKey(0);
 
     }
@@ -704,8 +694,8 @@ int main(int argc, char** argv)
     p.plane_stereo();
     //std::vector<Vec2f> points;
     //p.reprojection_errors(points);
-    imwrite("epipolar_L.jpg", p.undist_img1);
-    imwrite("epipolar_C.jpg", p.undist_img2);
+    //imwrite("epipolar_L.jpg", p.undist_img1);
+    //imwrite("epipolar_C.jpg", p.undist_img2);
 
     return 0;    
 }
