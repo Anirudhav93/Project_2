@@ -103,6 +103,7 @@ class Part_3
             pos2.push_back(Point(2151, 1709));
             pos2.push_back(Point(3283, 982));
             pos2.push_back(Point(2961, 628));
+            //just for commit
 
             for(int it = 0; it < pos1.size(); it++)
             {
