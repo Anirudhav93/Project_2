@@ -352,24 +352,22 @@ class Part_3
     }
 
 
-//Members for part_4
-Mat U, V_t, Sig, U_t, V;
-Mat R1, R2, W_t;
-Mat W = (Mat_<double>(3,3)<< 0, -1, 0, 1, 0, 0, 0, 0, 1);
-Mat t;
-double p_z;
-Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;
+    //Members for part_4
+    Mat U, V_t, Sig, U_t, V;
+    Mat R1, R2, W_t;
+    Mat W = (Mat_<double>(3,3)<< 0, -1, 0, 1, 0, 0, 0, 0, 1);
+    Mat t;
+    double p_z;
+    Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;
 
-float Error;
-vector<Point3f>x_l_gvec;
-vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
+    float Error;
+    vector<Point3f>x_l_gvec;
+    vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
     
 
 
- double calculate_depth(Mat R, Mat r)
- {
-
-        Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;   
+    double calculate_depth(Mat R, Mat r)
+    {
         Mat pts_1, pts_2, result;
         double depth[n_pos1.size()];
         pts_1 = Mat::eye(3,n_pos1.size(), CV_64F);
@@ -413,9 +411,9 @@ vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
         result.col(it) =( -fx*((fx*r.row(0) - x_r.at<double>(0,it)*r.row(2)))/((fx*R.row(0) - x_r.at<double>(0,it)*(R.row(2)))*x_l_temp.col(it))); 
         }
         return result.at<double>(0);
- }
+    }
 
-   void compute_pairs(Mat& Rot, Mat& trans)
+    void compute_pairs(Mat& Rot, Mat& trans)
     {
         SVD::compute(E, Sig, U, V_t);
         if(determinant(U)==-1 &&determinant(V_t) ==-1)
@@ -493,38 +491,38 @@ vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
     }
 
 
-void reprojection( Mat &rot, Mat &trans)
-{
-Mat imagepoints;
-Matx<double, 3, 1> trans_vec;
-Matx<double, 3, 1> rot_vec;
-vector<Point2f> d2_vector;
+    void reprojection( Mat &rot, Mat &trans)
+    {
+    Mat imagepoints;
+    Matx<double, 3, 1> trans_vec;
+    Matx<double, 3, 1> rot_vec;
+    vector<Point2f> d2_vector;
 
-Rodrigues(rot, rot_vec);
-trans_vec.operator()(0,0) = trans.at<double>(0,0);
-trans_vec.operator()(1,0) = trans.at<double>(1,0);
-trans_vec.operator()(2,0) = trans.at<double>(2,0);
-cout<<"camera coordinates"<<"\t"<<x_l_temp<<endl;
-cout<<"previously used:-"<<endl<<Mat(pos1_hg)<<endl;
-projectPoints(x_l_temp_t, rot, trans_vec, cam_mat, dc, imagepoints);
-cout<<"reprojected points"<<Mat(imagepoints);
-namedWindow("image1", WINDOW_NORMAL);
-namedWindow("image2", WINDOW_NORMAL);
-        for(int r=0; r<n_pos1.size(); r++)
-        {
-         rectangle(undist_img2, Point(imagepoints.at<double>(r,0)-70, imagepoints.at<double>(r,1)-70), Point(imagepoints.at<double>(r,0)+70, imagepoints.at<double>(r,1)+70), Scalar(255, 0,0), -1);   
-        }
-        compute_pairs(rot, trans);
-        cout<<Mat(pos1_hg);
-        cout<<rot<<endl<<trans<<endl;
-        projectPoints(Mat(pos1_hg), rot, trans, cam_mat, dc, imagepoints); 
-        cout<<"reprojected points"<<Mat(imagepoints);
-    
-    
-        imshow("image1", undist_img1);
-        imshow("image2", undist_img2);
-        waitKey(0);
-}
+    Rodrigues(rot, rot_vec);
+    trans_vec.operator()(0,0) = trans.at<double>(0,0);
+    trans_vec.operator()(1,0) = trans.at<double>(1,0);
+    trans_vec.operator()(2,0) = trans.at<double>(2,0);
+    cout<<"camera coordinates"<<"\t"<<x_l_temp<<endl;
+    cout<<"previously used:-"<<endl<<Mat(pos1_hg)<<endl;
+    transpose(x_l_temp, x_l_temp_t);
+    projectPoints(x_l_temp_t, rot, trans_vec, cam_mat, dc, imagepoints);
+    cout<<"reprojected points"<<Mat(imagepoints);
+    namedWindow("image1", WINDOW_NORMAL);
+    namedWindow("image2", WINDOW_NORMAL);
+    for(int it=0; it<n_pos1.size(); it++)
+    {
+        rectangle(undist_img2, Point(imagepoints.at<double>(it,0)-70, imagepoints.at<double>(it,1)-70), Point(imagepoints.at<double>(it,0)+70, imagepoints.at<double>(it,1)+70), Scalar(255, 0,0), -1);   
+    }
+    compute_pairs(rot, trans);
+    cout<<Mat(pos1_hg);
+    cout<<rot<<endl<<trans<<endl;
+    projectPoints(Mat(pos1_hg), rot, trans, cam_mat, dc, imagepoints); 
+    cout<<"reprojected points"<<Mat(imagepoints);
+
+    imshow("image1", undist_img1);
+    imshow("image2", undist_img2);
+    waitKey(0);
+    }
 
     void first_image_pair(Mat &rotation, Mat&translation)
     {
@@ -536,6 +534,7 @@ namedWindow("image2", WINDOW_NORMAL);
         undistort_image();
         epipolar_image();
         compute_pairs(rotation, translation);
+        reprojection(rotation, translation);
         imgLC_pos1 = Mat::eye(2, n_pos1.size(), CV_64F);
         imgLC_pos2 = Mat::eye(2, n_pos1.size(), CV_64F);
 
@@ -559,6 +558,7 @@ namedWindow("image2", WINDOW_NORMAL);
         undistort_image();
         epipolar_image();
         compute_pairs(rotation, translation);
+        reprojection(rotation, translation);
         imgCR_pos1 = Mat::eye(2, n_pos1.size(), CV_64F);
         imgCR_pos2 = Mat::eye(2, n_pos1.size(), CV_64F);
 
@@ -582,6 +582,7 @@ namedWindow("image2", WINDOW_NORMAL);
         undistort_image();
         epipolar_image();
         compute_pairs(rotation, translation);
+        reprojection(rotation, translation);
         imgLR_pos1 = Mat::eye(3, n_pos1.size(), CV_64F);
         imgLR_pos2 = Mat::eye(3, n_pos1.size(), CV_64F);
 
