@@ -477,6 +477,7 @@ class Part_3
             R1.copyTo(Rot);
             t.copyTo(trans);
         }
+        recoverPose(E, n_pos1, n_pos2, Rot, trans);
         return;
     }
 
@@ -681,7 +682,7 @@ class Part_3
             absdiff(img_L, hom_imgLC, disp_LC);
             for (int it2 = 1; it2 < max_ker_len; it2+=2) 
             {
-                boxFilter(disp_LC, filt_LC[sad_size1], 50, Size(it2, it2), Point(-1,-1), false);
+                boxFilter(disp_LC, filt_LC[sad_size1], 10, Size(it2, it2), Point(-1,-1), false);
             }
             sad_size1++;
         }
@@ -712,7 +713,7 @@ class Part_3
             absdiff(img_L, hom_imgLR, disp_LR);
             for (int it2 = 1; it2 < max_ker_len; it2+=2) 
             {
-                boxFilter(disp_LR, filt_LR[sad_size2], 50, Size(it2, it2), Point(-1,-1), false);
+                boxFilter(disp_LR, filt_LR[sad_size2], 10, Size(it2, it2), Point(-1,-1), false);
             }
             sad_size2++;
         }
