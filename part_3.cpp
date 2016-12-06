@@ -66,28 +66,46 @@ class Part_3
         {
         if (choose == 1)
         {
-            pos1.push_back(Point(893, 1265));
-            pos1.push_back(Point(830, 1471));
-            pos1.push_back(Point(947, 2477));
-            pos1.push_back(Point(2199, 1188));
-            pos1.push_back(Point(1658, 1239));
-            pos1.push_back(Point(2565, 352));
-            pos1.push_back(Point(3522, 2227));
-            pos1.push_back(Point(337, 1549));
-            pos1.push_back(Point(337, 609));
-            pos1.push_back(Point(346, 816));
-           
-            pos2.push_back(Point(967, 741));
-            pos2.push_back(Point(967, 924));
-            pos2.push_back(Point(927, 1595));
-            pos2.push_back(Point(1423, 1345));
-            pos2.push_back(Point(1325, 1534));
-            pos2.push_back(Point(1282, 2488));
-            pos2.push_back(Point(2124, 1331));
-            pos2.push_back(Point(2631, 1288));
-            pos2.push_back(Point(3003, 756));
-            pos2.push_back(Point(3986, 2428));
-         for(int it = 0; it < pos1.size(); it++)
+            pos1.push_back(Point(279, 537));
+            pos1.push_back(Point(589, 418));
+            pos1.push_back(Point(609, 1147));
+            pos1.push_back(Point(785, 1002));
+            pos1.push_back(Point(920, 997));
+            pos1.push_back(Point(909, 1271));
+            pos1.push_back(Point(821, 1333));
+            pos1.push_back(Point(889, 1431));
+            pos1.push_back(Point(1121, 1266));
+            pos1.push_back(Point(1116, 1080));
+            pos1.push_back(Point(1183, 976));
+            pos1.push_back(Point(1338, 1070));
+            pos1.push_back(Point(1390, 1318));
+            pos1.push_back(Point(1493, 1178));
+            pos1.push_back(Point(1597, 1178));
+            pos1.push_back(Point(1225, 1674));
+            pos1.push_back(Point(2264, 940));
+            pos1.push_back(Point(1933, 594));
+
+            pos2.push_back(Point(1423, 675));
+            pos2.push_back(Point(1693, 555));
+            pos2.push_back(Point(1704, 1210));
+            pos2.push_back(Point(1834, 1080));
+            pos2.push_back(Point(1943, 1075));
+            pos2.push_back(Point(1906, 1324));
+            pos2.push_back(Point(1849, 1392));
+            pos2.push_back(Point(1891, 1480));
+            pos2.push_back(Point(2093, 1324));
+            pos2.push_back(Point(2099, 1148));
+            pos2.push_back(Point(2286, 1137));
+            pos2.push_back(Point(2171, 1049));
+            pos2.push_back(Point(2338, 1371));
+            pos2.push_back(Point(2421, 1241));
+            pos2.push_back(Point(2530, 1236));
+            pos2.push_back(Point(2151, 1709));
+            pos2.push_back(Point(3283, 982));
+            pos2.push_back(Point(2961, 628));
+            //just for commit
+
+            for(int it = 0; it < pos1.size(); it++)
             {
                 rectangle(i1, Point(pos1[it].x-50, pos1[it].y-50), Point(pos1[it].x+50, pos1[it].y+50), Scalar(0,0,255), -1);
                 rectangle(i2, Point(pos2[it].x-50, pos2[it].y-50), Point(pos2[it].x+50, pos2[it].y+50), Scalar(0,0,255), -1);
@@ -98,30 +116,48 @@ class Part_3
 
         else if (choose == 2)
         {
-            pos2.push_back(Point(1978, 778));
-            pos2.push_back(Point(1981, 953));
-            pos2.push_back(Point(2394, 1328));
-            pos2.push_back(Point(2265, 1520));
-            pos2.push_back(Point(2087, 2405));
-            pos2.push_back(Point(1967, 1575));
-            pos2.push_back(Point(3127, 1280));
-            pos2.push_back(Point(3654, 1219));
-            pos2.push_back(Point(1884, 778));
-            pos2.push_back(Point(1869, 950));
-            
-            pos1.push_back(Point(841, 922));
-            pos1.push_back(Point(967, 924));
-            pos1.push_back(Point(864, 873));
-            pos1.push_back(Point(970, 741));
-            pos1.push_back(Point(1420, 1345));
-            pos1.push_back(Point(1323, 1523));
-            pos1.push_back(Point(1280, 2451));
-            pos1.push_back(Point(2127, 1328));
-            pos1.push_back(Point(2631, 1288));
-            pos1.push_back(Point(927, 1592));
-          
+            pos1.push_back(Point(444, 847));
+            pos1.push_back(Point(765, 672));
+            pos1.push_back(Point(1426, 672));
+            pos1.push_back(Point(1690, 553));
+            pos1.push_back(Point(1700, 1204));
+            pos1.push_back(Point(1199, 1338));
+            pos1.push_back(Point(1829, 1085));
+            pos1.push_back(Point(1943, 1080));
+            pos1.push_back(Point(1912, 1323));
+            pos1.push_back(Point(1850, 1385));
+            pos1.push_back(Point(1897, 1478));
+            pos1.push_back(Point(2093, 1333));
+            pos1.push_back(Point(2093, 1142));
+            pos1.push_back(Point(2176, 1049));
+            pos1.push_back(Point(2295, 1142));
+            pos1.push_back(Point(2352, 1369));
+            pos1.push_back(Point(2434, 1250));
+            pos1.push_back(Point(2150, 1721));
+            pos1.push_back(Point(2961, 625));
 
-         for(int it = 0; it < pos1.size(); it++)
+            pos2.push_back(Point(1252, 883));
+            pos2.push_back(Point(1527, 711));
+            pos2.push_back(Point(2130, 670));
+            pos2.push_back(Point(2400, 535));
+            pos2.push_back(Point(2400, 1184));
+            pos2.push_back(Point(1896, 1340));
+            pos2.push_back(Point(2509, 1065));
+            pos2.push_back(Point(2639, 1049));
+            pos2.push_back(Point(2582, 1314));
+            pos2.push_back(Point(2535, 1371));
+            pos2.push_back(Point(2577, 1465));
+            pos2.push_back(Point(2790, 1309));
+            pos2.push_back(Point(2779, 1122));
+            pos2.push_back(Point(2878, 1013));
+            pos2.push_back(Point(2987, 1101));
+            pos2.push_back(Point(3049, 1345));
+            pos2.push_back(Point(3138, 1215));
+            pos2.push_back(Point(2810, 1714));
+            pos2.push_back(Point(3777, 535));
+            //just commit
+
+            for(int it = 0; it < pos1.size(); it++)
             {
                 rectangle(i1, Point(pos1[it].x-50, pos1[it].y-50), Point(pos1[it].x+50, pos1[it].y+50), Scalar(0,0,255), -1);
                 rectangle(i2, Point(pos2[it].x-50, pos2[it].y-50), Point(pos2[it].x+50, pos2[it].y+50), Scalar(0,0,255), -1);
@@ -132,30 +168,46 @@ class Part_3
 
         else if (choose == 3)
         {
-            pos1.push_back(Point(206, 598));
-            pos1.push_back(Point(337, 609));
-            pos1.push_back(Point(349, 807));
-            pos1.push_back(Point(899, 1260));
-            pos1.push_back(Point(836, 1474));
-            pos1.push_back(Point(953, 2477));
-            pos1.push_back(Point(1219, 1277));
-            pos1.push_back(Point(1658, 1234));
-            pos1.push_back(Point(2205, 1191));
-            pos1.push_back(Point(2079, 1219));
-            
-            pos2.push_back(Point(2394, 1331));
-            pos2.push_back(Point(2265, 1517));
-            pos2.push_back(Point(2084, 2405));
-            pos2.push_back(Point(1887, 781));
-            pos2.push_back(Point(1978, 778));
-            pos2.push_back(Point(1970, 1577));
-            pos2.push_back(Point(3124, 1280));
-            pos2.push_back(Point(3654, 1217));
-            pos2.push_back(Point(2683, 1331));
-            pos2.push_back(Point(3822, 1251));
-           
+            pos1.push_back(Point(284, 537));
+            pos1.push_back(Point(594, 423));
+            pos1.push_back(Point(609, 1142));
+            pos1.push_back(Point(790, 1008));
+            pos1.push_back(Point(920, 1008));
+            pos1.push_back(Point(909, 1261));
+            pos1.push_back(Point(821, 1333));
+            pos1.push_back(Point(889, 1431));
+            pos1.push_back(Point(1121, 1271));
+            pos1.push_back(Point(1116, 1080));
+            pos1.push_back(Point(1183, 971));
+            pos1.push_back(Point(1333, 1070));
+            pos1.push_back(Point(1390, 1318));
+            pos1.push_back(Point(1499, 1188));
+            pos1.push_back(Point(1592, 1188));
+            pos1.push_back(Point(1235, 1685));
+            pos1.push_back(Point(1809, 1281));
+            pos1.push_back(Point(1933, 589));
 
-         for(int it = 0; it < pos1.size(); it++)
+            pos2.push_back(Point(2125, 670));
+            pos2.push_back(Point(2400, 529));
+            pos2.push_back(Point(2395, 1184));
+            pos2.push_back(Point(2514, 1059));
+            pos2.push_back(Point(2623, 1054));
+            pos2.push_back(Point(2587, 1309));
+            pos2.push_back(Point(2535, 1371));
+            pos2.push_back(Point(2582, 1465));
+            pos2.push_back(Point(2790, 1309));
+            pos2.push_back(Point(2779, 1111));
+            pos2.push_back(Point(2868, 1018));
+            pos2.push_back(Point(2998, 1106));
+            pos2.push_back(Point(3044, 1361));
+            pos2.push_back(Point(3138, 1210));
+            pos2.push_back(Point(3242, 1215));
+            pos2.push_back(Point(2805, 1704));
+            pos2.push_back(Point(3605, 1309));
+            pos2.push_back(Point(3782, 535));
+            //just commit
+
+            for(int it = 0; it < pos1.size(); it++)
             {
                 rectangle(i1, Point(pos1[it].x-50, pos1[it].y-50), Point(pos1[it].x+50, pos1[it].y+50), Scalar(0,0,255), -1);
                 rectangle(i2, Point(pos2[it].x-50, pos2[it].y-50), Point(pos2[it].x+50, pos2[it].y+50), Scalar(0,0,255), -1);
@@ -749,9 +801,9 @@ void multi_plane_stereo()
         destroyAllWindows();
 
         namedWindow("disp_image_multi", WINDOW_NORMAL);
-        namedWindow("disp_image_f1", WINDOW_NORMAL);
+        //namedWindow("disp_image_f1", WINDOW_NORMAL);
 
-        imshow("disp_image1", min_disp_LCR);
+        imshow("disp_image_multi", min_disp_LCR);
 
         waitKey(0);
 
