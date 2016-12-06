@@ -25,6 +25,9 @@ class Part_3
 
     Mat imgLC_pos1, imgLC_pos2;
 
+    int choose;
+    char click; 
+
     // constructor
     Part_3()
     {
@@ -32,6 +35,8 @@ class Part_3
         cam_mat = Mat::eye(3, 3, CV_64F);
         imgLC_pos1 = Mat::eye(2, n_pos1.size(), CV_64F);
         imgLC_pos2 = Mat::eye(2, n_pos1.size(), CV_64F);
+        choose = 1;
+        click = 'y';
     }
 
     // member functions
@@ -41,17 +46,176 @@ class Part_3
         img2 = imread(b);
     }
 
+
     void display_image(Mat i1, Mat i2)
     {
         namedWindow("image1", WINDOW_NORMAL);
         namedWindow("image2", WINDOW_NORMAL);
 
-        imshow("image1", i1);
-        imshow("image2", i2);
+
+        if (click == 'y')
+        {
+            imshow("image1", i1);
+            imshow("image2", i2);
 
         // set the callback function for any mouse event
-        setMouseCallback("image1", callback1_Func, NULL);
-        setMouseCallback("image2", callback2_Func, NULL);
+            setMouseCallback("image1", callback1_Func, NULL);
+            setMouseCallback("image2", callback2_Func, NULL);
+        }
+        else 
+        {
+        if (choose == 1)
+        {
+            pos1.push_back(Point(279, 537));
+            pos1.push_back(Point(589, 418));
+            pos1.push_back(Point(609, 1147));
+            pos1.push_back(Point(785, 1002));
+            pos1.push_back(Point(920, 997));
+            pos1.push_back(Point(909, 1271));
+            pos1.push_back(Point(821, 1333));
+            pos1.push_back(Point(889, 1431));
+            pos1.push_back(Point(1121, 1266));
+            pos1.push_back(Point(1116, 1080));
+            pos1.push_back(Point(1183, 976));
+            pos1.push_back(Point(1338, 1070));
+            pos1.push_back(Point(1390, 1318));
+            pos1.push_back(Point(1493, 1178));
+            pos1.push_back(Point(1597, 1178));
+            pos1.push_back(Point(1225, 1674));
+            pos1.push_back(Point(2264, 940));
+            pos1.push_back(Point(1933, 594));
+
+            pos2.push_back(Point(1423, 675));
+            pos2.push_back(Point(1693, 555));
+            pos2.push_back(Point(1704, 1210));
+            pos2.push_back(Point(1834, 1080));
+            pos2.push_back(Point(1943, 1075));
+            pos2.push_back(Point(1906, 1324));
+            pos2.push_back(Point(1849, 1392));
+            pos2.push_back(Point(1891, 1480));
+            pos2.push_back(Point(2093, 1324));
+            pos2.push_back(Point(2099, 1148));
+            pos2.push_back(Point(2286, 1137));
+            pos2.push_back(Point(2171, 1049));
+            pos2.push_back(Point(2338, 1371));
+            pos2.push_back(Point(2421, 1241));
+            pos2.push_back(Point(2530, 1236));
+            pos2.push_back(Point(2151, 1709));
+            pos2.push_back(Point(3283, 982));
+            pos2.push_back(Point(2961, 628));
+
+            for(int it = 0; it < pos1.size(); it++)
+            {
+                rectangle(i1, Point(pos1[it].x-50, pos1[it].y-50), Point(pos1[it].x+50, pos1[it].y+50), Scalar(0,0,255), -1);
+                rectangle(i2, Point(pos2[it].x-50, pos2[it].y-50), Point(pos2[it].x+50, pos2[it].y+50), Scalar(0,0,255), -1);
+
+            }
+            choose = 2;
+        }
+
+        else if (choose == 2)
+        {
+            pos1.push_back(Point(444, 847));
+            pos1.push_back(Point(765, 672));
+            pos1.push_back(Point(1426, 672));
+            pos1.push_back(Point(1690, 553));
+            pos1.push_back(Point(1700, 1204));
+            pos1.push_back(Point(1199, 1338));
+            pos1.push_back(Point(1829, 1085));
+            pos1.push_back(Point(1943, 1080));
+            pos1.push_back(Point(1912, 1323));
+            pos1.push_back(Point(1850, 1385));
+            pos1.push_back(Point(1897, 1478));
+            pos1.push_back(Point(2093, 1333));
+            pos1.push_back(Point(2093, 1142));
+            pos1.push_back(Point(2176, 1049));
+            pos1.push_back(Point(2295, 1142));
+            pos1.push_back(Point(2352, 1369));
+            pos1.push_back(Point(2434, 1250));
+            pos1.push_back(Point(2150, 1721));
+            pos1.push_back(Point(2961, 625));
+
+            pos2.push_back(Point(1252, 883));
+            pos2.push_back(Point(1527, 711));
+            pos2.push_back(Point(2130, 670));
+            pos2.push_back(Point(2400, 535));
+            pos2.push_back(Point(2400, 1184));
+            pos2.push_back(Point(1896, 1340));
+            pos2.push_back(Point(2509, 1065));
+            pos2.push_back(Point(2639, 1049));
+            pos2.push_back(Point(2582, 1314));
+            pos2.push_back(Point(2535, 1371));
+            pos2.push_back(Point(2577, 1465));
+            pos2.push_back(Point(2790, 1309));
+            pos2.push_back(Point(2779, 1122));
+            pos2.push_back(Point(2878, 1013));
+            pos2.push_back(Point(2987, 1101));
+            pos2.push_back(Point(3049, 1345));
+            pos2.push_back(Point(3138, 1215));
+            pos2.push_back(Point(2810, 1714));
+            pos2.push_back(Point(3777, 535));
+
+            for(int it = 0; it < pos1.size(); it++)
+            {
+                rectangle(i1, Point(pos1[it].x-50, pos1[it].y-50), Point(pos1[it].x+50, pos1[it].y+50), Scalar(0,0,255), -1);
+                rectangle(i2, Point(pos2[it].x-50, pos2[it].y-50), Point(pos2[it].x+50, pos2[it].y+50), Scalar(0,0,255), -1);
+
+            }
+            choose = 3;
+        }
+
+        else if (choose == 3)
+        {
+            pos1.push_back(Point(284, 537));
+            pos1.push_back(Point(594, 423));
+            pos1.push_back(Point(609, 1142));
+            pos1.push_back(Point(790, 1008));
+            pos1.push_back(Point(920, 1008));
+            pos1.push_back(Point(909, 1261));
+            pos1.push_back(Point(821, 1333));
+            pos1.push_back(Point(889, 1431));
+            pos1.push_back(Point(1121, 1271));
+            pos1.push_back(Point(1116, 1080));
+            pos1.push_back(Point(1183, 971));
+            pos1.push_back(Point(1333, 1070));
+            pos1.push_back(Point(1390, 1318));
+            pos1.push_back(Point(1499, 1188));
+            pos1.push_back(Point(1592, 1188));
+            pos1.push_back(Point(1235, 1685));
+            pos1.push_back(Point(1809, 1281));
+            pos1.push_back(Point(1933, 589));
+
+            pos2.push_back(Point(2125, 670));
+            pos2.push_back(Point(2400, 529));
+            pos2.push_back(Point(2395, 1184));
+            pos2.push_back(Point(2514, 1059));
+            pos2.push_back(Point(2623, 1054));
+            pos2.push_back(Point(2587, 1309));
+            pos2.push_back(Point(2535, 1371));
+            pos2.push_back(Point(2582, 1465));
+            pos2.push_back(Point(2790, 1309));
+            pos2.push_back(Point(2779, 1111));
+            pos2.push_back(Point(2868, 1018));
+            pos2.push_back(Point(2998, 1106));
+            pos2.push_back(Point(3044, 1361));
+            pos2.push_back(Point(3138, 1210));
+            pos2.push_back(Point(3242, 1215));
+            pos2.push_back(Point(2805, 1704));
+            pos2.push_back(Point(3605, 1309));
+            pos2.push_back(Point(3782, 535));
+
+            for(int it = 0; it < pos1.size(); it++)
+            {
+                rectangle(i1, Point(pos1[it].x-50, pos1[it].y-50), Point(pos1[it].x+50, pos1[it].y+50), Scalar(0,0,255), -1);
+                rectangle(i2, Point(pos2[it].x-50, pos2[it].y-50), Point(pos2[it].x+50, pos2[it].y+50), Scalar(0,0,255), -1);
+
+            }
+            choose = 1;
+        }
+
+        imshow("image1", i1);
+        imshow("image2", i2);
+        }
 
         // Wait until user press some key
          waitKey(0);
@@ -105,6 +269,7 @@ class Part_3
         undistort(img1, undist_img1, dt1, dc);
         undistort(img2, undist_img2, dt2, dc);
 
+
         display_image(undist_img1, undist_img2);
     }
 
@@ -134,8 +299,8 @@ class Part_3
         Point2d pp(cx, cy);
         E = findEssentialMat(pos1, pos2, fx, pp, RANSAC, 0.999, 1.0, mask);
         F = findFundamentalMat(pos1, pos2, CV_FM_RANSAC, 0.999, 1.0, mask);
-        //cout << "E "<< E <<endl;
-        //cout << "F "<< F <<endl;
+        cout << "E "<< E <<endl;
+        cout << "F "<< F <<endl;
         //cout << "Mask "<< (int) mask.at<char>(0,1) <<endl;
 
         Mat epilines1, epilines2, norm_epilines1, norm_epilines2;
@@ -506,17 +671,17 @@ class Part_3
         img_R = imread("IMG_R.JPG", 0);
         max_ker_len = 31;
         sad_size1 = 0;
-        for (int it1 = 1; it1 <= 527; it1+=20) //need to set as fx
+        for (int it1 = 1; it1 <= (int) fx; it1+=20)
         {
             dist = fx/it1;
             H = R_12 - (r_12_1*n_p)/dist;
-            Hm = cam_mat*H*cam_mat.inv();
+            Hm = cam_mat*H.inv()*cam_mat.inv();
             //hom_imgLC = Hm*img_C;
             warpPerspective(img_C, hom_imgLC, Hm, img_L.size());
             absdiff(img_L, hom_imgLC, disp_LC);
             for (int it2 = 1; it2 < max_ker_len; it2+=2) 
             {
-                blur(disp_LC, filt_LC[sad_size1], Size(it2, it2), Point(-1,-1));
+                boxFilter(disp_LC, filt_LC[sad_size1], 50, Size(it2, it2), Point(-1,-1), false);
             }
             sad_size1++;
         }
@@ -537,17 +702,17 @@ class Part_3
             }
         }
 
-        for (int it1 = 1; it1 <= 527; it1+=20) //need to set as fx
+        for (int it1 = 1; it1 <= (int) fx; it1+=20)
         {
             dist = fx/it1;
             H = R_13 - (r_13_1*n_p)/dist;
-            Hm = cam_mat*H*cam_mat.inv();
+            Hm = cam_mat*H.inv()*cam_mat.inv();
             //hom_imgLR = Hm*img_R;
             warpPerspective(img_R, hom_imgLR, Hm, img_L.size());
             absdiff(img_L, hom_imgLR, disp_LR);
             for (int it2 = 1; it2 < max_ker_len; it2+=2) 
             {
-                blur(disp_LR, filt_LR[sad_size2], Size(it2, it2), Point(-1,-1));
+                boxFilter(disp_LR, filt_LR[sad_size2], 50, Size(it2, it2), Point(-1,-1), false);
             }
             sad_size2++;
         }
@@ -568,20 +733,20 @@ class Part_3
             }
         }
         
-        Mat disp1, disp2;
-        Ptr<StereoBM> sbm = StereoBM::create(16, 2);
-        sbm->setBlockSize(9);
-        sbm->setNumDisparities(112);
-        sbm->setPreFilterSize(5);
-        sbm->setPreFilterCap(61);
-        sbm->setMinDisparity(-39);
-        sbm->setTextureThreshold(507);
-        sbm->setUniquenessRatio(0);
-        sbm->setSpeckleWindowSize(0);
-        sbm->setSpeckleRange(8);
-        sbm->setDisp12MaxDiff(1);
-        sbm->compute(img_L, img_C, disp1);
-        sbm->compute(img_L, img_R, disp2);
+        //Mat disp1, disp2;
+        //Ptr<StereoBM> sbm = StereoBM::create(16, 2);
+        //sbm->setBlockSize(9);
+        //sbm->setNumDisparities(112);
+        //sbm->setPreFilterSize(5);
+        //sbm->setPreFilterCap(61);
+        //sbm->setMinDisparity(-39);
+        //sbm->setTextureThreshold(507);
+        //sbm->setUniquenessRatio(0);
+        //sbm->setSpeckleWindowSize(0);
+        //sbm->setSpeckleRange(8);
+        //sbm->setDisp12MaxDiff(1);
+        //sbm->compute(img_L, img_C, disp1);
+        //sbm->compute(img_L, img_R, disp2);
 
         destroyAllWindows();
 
@@ -594,8 +759,8 @@ class Part_3
         imshow("disp_image1", min_disp_LC);
         imshow("disp_image2", min_disp_LR);
 
-        imshow("disp_image_f1", disp1);
-        imshow("disp_image_f2", disp2);
+        imshow("disp_image_f1", hom_imgLC);
+        imshow("disp_image_f2", hom_imgLR);
         waitKey(0);
 
     }
@@ -613,7 +778,7 @@ void callback1_Func(int event, int x, int y, int flags, void* userdate)
             cout << "Too many points clicked." <<endl;
             return;
         }
-       // cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
+       cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
         p.pos1.push_back(Point(x, y));
         num_points1++;
         namedWindow("image1", WINDOW_NORMAL);
@@ -632,7 +797,7 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
             cout << "Too many points clicked." <<endl;
             return;
         }
-       // cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
+       cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;        
         p.pos2.push_back(Point(x, y));
         num_points2++;
         rectangle(p.undist_img2, Point(x-50, y-50), Point(x+50, y+50), Scalar(0,0,255), -1);
@@ -644,7 +809,10 @@ void callback2_Func(int event, int x, int y, int flags, void* userdate)
 
 
 int main(int argc, char** argv)
-{  
+{
+    cout << "Click on points?(y/n) ";
+    cin >> p.click;
+    cout << endl;
     p.rescale_tran_vec();
     p.plane_stereo();
     //std::vector<Vec2f> points;
