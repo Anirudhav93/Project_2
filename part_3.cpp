@@ -155,6 +155,7 @@ class Part_3
             pos2.push_back(Point(3138, 1215));
             pos2.push_back(Point(2810, 1714));
             pos2.push_back(Point(3777, 535));
+            //just commit
 
             for(int it = 0; it < pos1.size(); it++)
             {
@@ -204,6 +205,7 @@ class Part_3
             pos2.push_back(Point(2805, 1704));
             pos2.push_back(Point(3605, 1309));
             pos2.push_back(Point(3782, 535));
+            //just commit
 
             for(int it = 0; it < pos1.size(); it++)
             {
