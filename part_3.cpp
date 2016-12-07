@@ -649,6 +649,7 @@ void clear_vectors()
     Mat beta, gamma;
     double norm_sum_r, norm_nsum_r; 
     Mat r_12_1, r_23_1, r_13_1;
+    Mat b_r_23_1, g_r_13_1;
     void rescale_tran_vec()
     {
         first_image_pair(R_12, r_12);
@@ -687,6 +688,8 @@ void clear_vectors()
         cout << "beta " << beta << endl;
         cout << "gamma " << gamma << endl;
         
+        b_r_23_1 = r_23_1*beta;
+        g_r_13_1 = r_13_1*(gamma);
         nsum_r = r_12_1 + r_23_1*beta + r_13_1*gamma;
         cout << "Sum of n vectors " << "\n" << nsum_r << endl;
 
@@ -698,8 +701,9 @@ void clear_vectors()
     // Members
     Mat H, Hm, hom_imgLC, hom_imgLR;
     Mat img_L, img_C, img_R;
-    Mat disp_LC, disp_LR, filt_LC[530], filt_LR[530];
+    Mat disp_LC, disp_LR;
     Mat min_disp_LC, min_disp_LR;
+    Mat filt_LC[3300], filt_LR[3300];
 
     int max_ker_len, sad_size1, sad_size2;
 
@@ -712,7 +716,7 @@ void clear_vectors()
         img_R = imread("IMG_R.JPG", 0);
         max_ker_len = 31;
         sad_size1 = 0;
-        for (int it1 = 1; it1 <= (int) fx; it1+=50)
+        for (int it1 = 1; it1 <= (int) fx; it1+=150)
         {
             dist = fx/it1;
             H = R_12 - (r_12_1*n_p)/dist;
@@ -743,10 +747,10 @@ void clear_vectors()
             }
         }
 
-        for (int it1 = 1; it1 <= (int) fx; it1+=50)
+        for (int it1 = 1; it1 <= (int) fx; it1+=150)
         {
             dist = fx/it1;
-            H = R_13 - (r_13_1*n_p)/dist;
+            H = (-R_13) - (g_r_13_1*n_p)/dist;
             Hm = cam_mat*H.inv()*cam_mat.inv();
             //hom_imgLR = Hm*img_R;
             warpPerspective(img_R, hom_imgLR, Hm, img_L.size());
@@ -797,39 +801,45 @@ void clear_vectors()
         namedWindow("disp_image_f1", WINDOW_NORMAL);
         namedWindow("disp_image_f2", WINDOW_NORMAL);
 
+        imwrite("Stereo_LC.jpg", min_disp_LC);
+        imwrite("Stereo_LR.jpg", min_disp_LR);
+
         imshow("disp_image1", min_disp_LC);
         imshow("disp_image2", min_disp_LR);
 
         imshow("disp_image_f1", hom_imgLC);
         imshow("disp_image_f2", hom_imgLR);
+
         waitKey(0);
 
     }
 
 
-///Members for part 7
-Mat filt_LCR[530], min_disp_LCR;
+    //Members for part 7
+    Mat min_disp_LCR;
 
 
-void multi_plane_stereo()
-{
-    for (int it1 =0; it1<sad_size2; it1++)
+    void multi_plane_stereo()
     {
-    add(filt_LC[it1], filt_LR[it1], filt_LCR[it1]);
-    }
-     min_disp_LCR = img_L.clone();
+        Mat filt_LCR[3300];
+        for (int it1 =0; it1<sad_size2; it1++)
+        {
+            //cout << it1 << endl;
+            add(filt_LC[it1], filt_LR[it1], filt_LCR[it1]);
+        }
+        cout << "here 1" <<endl;
+        min_disp_LCR = img_L.clone();
         for (int it1 = 0; it1 <= img_L.rows; it1++)
         {
             for (int it2 = 0; it2 <= img_L.cols; it2++)
             {
+                //cout << "here 2"<<endl;
                 min_disp_LCR.at<double>(it1, it2) = filt_LCR[0].at<double>(it1, it2);
                 for (int it3 = 1; it3 < sad_size2; it3++)
                 {
                     if (filt_LCR[it3].at<double>(it1, it2) < min_disp_LCR.at<double>(it1, it2))
                     {
                         min_disp_LCR.at<double>(it1, it2) = filt_LCR[it3].at<double>(it1, it2);
-
-
                     }
                 }
             }
@@ -839,14 +849,14 @@ void multi_plane_stereo()
 
         namedWindow("disp_image_multi", WINDOW_NORMAL);
         //namedWindow("disp_image_f1", WINDOW_NORMAL);
+            
+        imwrite("Multi_Stereo.jpg", min_disp_LCR);
 
         imshow("disp_image_multi", min_disp_LCR);
 
         waitKey(0);
 
-
-
- }    
+    }    
 
 
 }p;
