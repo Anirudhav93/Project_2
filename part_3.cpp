@@ -24,6 +24,7 @@ class Part_3
     Mat img1, img2, undist_img1, undist_img2;
     vector<Mat>rvecs;
     vector<Mat>tvecs;
+    int inlier_str_idx;
     vector<float> per_view;
     double fx, fy, cx, cy;
     Mat dc, M,  cam_mat, E, F, mask;
@@ -40,6 +41,7 @@ class Part_3
         cam_mat = Mat::eye(3, 3, CV_64F);
         imgLC_pos1 = Mat::eye(2, n_pos1.size(), CV_64F);
         imgLC_pos2 = Mat::eye(2, n_pos1.size(), CV_64F);
+        inlier_str_idx =0;
         choose = 1;
         click = 'y';
         pp.x =0.0;
@@ -269,9 +271,25 @@ class Part_3
                 k++;
             }
         }
+       
+        Mat cameraMatrix;
+
+        cameraMatrix = Mat::eye(3, 3, CV_64F);
+        cameraMatrix.at<double>(0, 0) = 3.2918518052374843e+03;
+        cameraMatrix.at<double>(0, 1) = 0.000000;
+        cameraMatrix.at<double>(0, 2) = 1.9714733313969050e+03;
+        cameraMatrix.at<double>(1, 0) = 0.000000;
+        cameraMatrix.at<double>(1, 1) = 3.2976573430941480e+03;
+        cameraMatrix.at<double>(1, 2) = 1.4753670078180755e+03;
+        cameraMatrix.at<double>(2, 0) = 0.00;
+        cameraMatrix.at<double>(2, 1) = 0.00;     
+        cameraMatrix.at<double>(2, 2) = 1.000000;
         
         //hacky correction to camera matrix
+        
+        cam_mat = cameraMatrix.clone();                                   
         invert(cam_mat, M);
+        fx = cam_mat.at<double>(0,0);
         M = M*fx;
 
 
@@ -306,7 +324,9 @@ class Part_3
         waitKey(0);
     }
 
-
+ ///Members for part 3
+// string inlier_string[3] = {"image_pair_a_left.JPG", "image_pair_b_left.JPG", "image_pair_c_left.JPG"};
+// string inlier_string2[3] = {"image_pair_a_right.JPG", "image_pair_b_right.JPG", "image_pair_c_right.JPG"};
     void epipolar_image()
     {
         Mat mat_points_1 = Mat::ones(3,pos1.size(), CV_64F);
@@ -348,7 +368,10 @@ class Part_3
         }
         imshow("image1", undist_img1);
         imshow("image2", undist_img2);
+        //imwrite(inlier_string[inlier_str_idx], undist_img1);
+        //imwrite(inlier_string2[inlier_str_idx],undist_img2);
         waitKey(0);
+        //inlier_str_idx++;
     }
 
 
@@ -359,10 +382,11 @@ class Part_3
     Mat t;
     double p_z;
     Mat x_l, x_r, x_l_temp, x_r_temp, x_l_temp_t;
-
     float Error;
     vector<Point3f>x_l_gvec;
     vector<Point3f>pos1_hg, pos2_hg, pos1_hg_t;
+  string inlier_string[3] = {"original_a_left.JPG", "original_b_left.JPG", "original_c_left.JPG"};
+ string inlier_string2[3] = {"reprojected_a_right.JPG", "reprojected_b_right.JPG", "reprojected_c_right.JPG"};
     
 
 
@@ -395,8 +419,8 @@ class Part_3
         }
 
         //points in camera frame
-        x_l_temp = cam_mat.inv()*pts_1;
-        x_r_temp = cam_mat.inv()*pts_2;
+        x_l_temp = M*pts_1;
+        x_r_temp = M*pts_2;
     
         // converting back to euclidean
         for(int it =0; it<2; it++)
@@ -409,12 +433,14 @@ class Part_3
         for(int it =0; it < n_pos1.size(); it++)
         {
         result.col(it) =( -fx*((fx*r.row(0) - x_r.at<double>(0,it)*r.row(2)))/((fx*R.row(0) - x_r.at<double>(0,it)*(R.row(2)))*x_l_temp.col(it))); 
+        cout<<"depth"<<"\t"<<it<<"\t"<<result.col(it)<<endl;
         }
         return result.at<double>(0);
     }
 
     void compute_pairs(Mat& Rot, Mat& trans)
-    {
+    {   
+        
         SVD::compute(E, Sig, U, V_t);
         if(determinant(U)==-1 &&determinant(V_t) ==-1)
         {
@@ -436,7 +462,6 @@ class Part_3
         SVD::compute(E, Sig, U, V);
         transpose(V,V_t);
         transpose(W,W_t);
-   
         R1= U*W*V;
         R2= U*W_t*V_t;
         U.col(2).copyTo(t);
@@ -490,10 +515,10 @@ class Part_3
         return;
     }
 
-
     void reprojection( Mat &rot, Mat &trans)
     {
     Mat imagepoints;
+    double sum;
     Matx<double, 3, 1> trans_vec;
     Matx<double, 3, 1> rot_vec;
     vector<Point2f> d2_vector;
@@ -516,14 +541,27 @@ class Part_3
     compute_pairs(rot, trans);
     cout<<Mat(pos1_hg);
     cout<<rot<<endl<<trans<<endl;
-    projectPoints(Mat(pos1_hg), rot, trans, cam_mat, dc, imagepoints); 
-    cout<<"reprojected points"<<Mat(imagepoints);
+    projectPoints(Mat(pos1_hg), rot, trans, cam_mat, Mat(), imagepoints); 
+    cout<<"reprojected points"<<endl<<Mat(imagepoints)<<endl;
 
     imshow("image1", undist_img1);
     imshow("image2", undist_img2);
     waitKey(0);
+
+    ///Reprojection error
+    for (int it =0; it<n_pos1.size(); it++)
+    {
+        sum+= sqrt(pow((n_pos1.at(it).x - imagepoints.at<double>(it,1)),2) +pow((n_pos1.at(it).y - imagepoints.at<double>(it,0)),2))/n_pos1.size();
+    
+
     }
 
+        imwrite(inlier_string[inlier_str_idx], undist_img1);
+        imwrite(inlier_string2[inlier_str_idx],undist_img2);
+        inlier_str_idx++;
+
+   cout<<"the reprojection error is"<<sum<<endl;
+    }
     void first_image_pair(Mat &rotation, Mat&translation)
     {
         string a, b;
@@ -648,7 +686,7 @@ void clear_vectors()
         gamma = -(tr_12*r_23_1)/(tr_23*r_13_1);
         cout << "beta " << beta << endl;
         cout << "gamma " << gamma << endl;
-
+        
         nsum_r = r_12_1 + r_23_1*beta + r_13_1*gamma;
         cout << "Sum of n vectors " << "\n" << nsum_r << endl;
 
@@ -862,10 +900,6 @@ int main(int argc, char** argv)
     p.rescale_tran_vec();
     p.plane_stereo();
     p.multi_plane_stereo();
-    //std::vector<Vec2f> points;
-    //p.reprojection_errors(points);
-    //imwrite("epipolar_L.jpg", p.undist_img1);
-    //imwrite("epipolar_C.jpg", p.undist_img2);
 
     return 0;    
 }
